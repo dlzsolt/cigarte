@@ -183,9 +183,9 @@ function loadState() {
     }
 }
 
-function saveState() {
+function saveState(shouldSync = true) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    syncData(); // Trigger cloud sync if connected
+    if (shouldSync) syncData(); // Trigger cloud sync if connected
 }
 
 // --- UI UPDATES ---
@@ -537,10 +537,15 @@ async function checkUser() {
                 console.log('Remote update received!', payload);
                 if (payload.new && payload.new.data) {
                     const cloudState = payload.new.data;
-                    // Only update if cloud state is different/newer (simple check)
-                    if (JSON.stringify(cloudState) !== JSON.stringify(state)) {
+                    
+                    // TIMESTAMP CHECK: Only update if cloud state is actually newer or different
+                    // We compare lastSmoked to see if another device smoked more recently
+                    if (cloudState.lastSmoked > state.lastSmoked || 
+                        (cloudState.lastSmoked === state.lastSmoked && JSON.stringify(cloudState) !== JSON.stringify(state))) {
+                        
+                        console.log('Syncing from cloud (newer data found)...');
                         state = cloudState;
-                        saveState(); // Will trigger syncData but that's fine, it handles loops ideally or we can suppress
+                        saveState(false); // Save to local but DON'T push back to avoid loops
                         updateUI();
                     }
                 }
@@ -689,6 +694,15 @@ try {
     els.signupBtn.addEventListener('click', handleSignup);
     els.logoutBtn.addEventListener('click', handleLogout);
     els.forceSyncBtn.addEventListener('click', pullData);
+
+    // Auto-Sync on visibility change (when you switch tabs or unlock phone)
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+            console.log('App active: Pulling latest data...');
+            pullData();
+        }
+    });
+
 } catch (err) {
     console.error('Critical initialization error:', err);
     alert('App failed to load: ' + err.message + '. Please try clearing your browser data/cache.');
