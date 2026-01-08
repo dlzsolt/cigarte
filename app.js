@@ -31,6 +31,9 @@ const els = {
     workEnd: document.getElementById('work-end'),
     workBreak: document.getElementById('work-break'),
     savePrefsBtn: document.getElementById('save-prefs-btn'),
+    // Notifications
+    enableNotifyBtn: document.getElementById('enable-notify-btn'),
+    notifyStatus: document.getElementById('notify-status'),
     // Sync UI
     sbUrl: document.getElementById('sb-url'),
     sbKey: document.getElementById('sb-key'),
@@ -67,6 +70,7 @@ let state = {
 
 let supabase = null;
 let currentUser = null;
+let notificationScheduled = false;
 
 // --- STATE MANAGEMENT ---
 
@@ -165,12 +169,21 @@ function updateUI() {
         els.timerText.textContent = isBreakTime ? 'Enjoy your break.' : 'You are allowed to smoke now.';
         els.countdown.textContent = '00:00:00';
         els.countdown.style.color = 'var(--primary)';
+        
+        // Reset notification flag when timer is done
+        if (notificationScheduled && diff <= 0) {
+            notificationScheduled = false;
+            sendNotification();
+        }
     } else {
         els.smokeBtn.disabled = true;
         els.smokeBtn.textContent = 'Wait...';
         els.timerText.textContent = 'Next cigarette allowed in:';
         els.countdown.textContent = formatTime(diff);
         els.countdown.style.color = 'var(--danger)';
+        
+        // Schedule notification logic (handled by polling in setInterval)
+        notificationScheduled = true;
     }
 }
 
@@ -286,6 +299,9 @@ function smoke() {
     state.date = new Date().toDateString();
     saveState();
     updateUI();
+    
+    // Schedule notification for 2 hours later
+    scheduleNotification();
 }
 
 function reset() {
@@ -327,6 +343,60 @@ function savePreferences() {
     saveState();
     updateUI();
     alert('Preferences saved!');
+}
+
+// --- NOTIFICATIONS ---
+
+function requestNotificationPermission() {
+    if (!('Notification' in window)) {
+        alert('This browser does not support notifications.');
+        return;
+    }
+    
+    Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+            els.notifyStatus.textContent = '✅ Notifications enabled';
+            els.notifyStatus.style.color = 'var(--primary)';
+            new Notification('Smoke Less', { body: 'Notifications enabled! We will tell you when you can smoke.' });
+        } else {
+            els.notifyStatus.textContent = '❌ Notifications denied';
+            els.notifyStatus.style.color = 'var(--danger)';
+        }
+    });
+}
+
+function scheduleNotification() {
+    if (Notification.permission !== 'granted') return;
+    
+    // Calculate 2 hours from now
+    const nextTime = Date.now() + SPACING_MS;
+    const timeString = new Date(nextTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    
+    // Note: Reliable background scheduling on web is hard without Push API + Server.
+    // This basic version works if the app is open/backgrounded on some devices,
+    // or simply relies on the user checking. 
+    // For robust mobile push, we'd need FCM/VAPID which is complex for a static site.
+    // We will attempt a simple timeout for now if the page stays open.
+    
+    setTimeout(() => {
+        sendNotification();
+    }, SPACING_MS);
+}
+
+function sendNotification() {
+    if (Notification.permission === 'granted') {
+        // Check if we already sent one recently to avoid spam?
+        // Actually, just send it.
+        const notif = new Notification('Smoke Less', {
+            body: 'You are allowed to smoke now.',
+            icon: 'icon.svg',
+            vibrate: [200, 100, 200]
+        });
+        notif.onclick = () => {
+            window.focus();
+            notif.close();
+        };
+    }
 }
 
 // --- BREATHING ---
@@ -495,24 +565,30 @@ async function pullData() {
 
 // --- INIT ---
 
-loadState();
-updateUI();
-setInterval(updateUI, 1000);
-initSupabase();
+try {
+    loadState();
+    updateUI();
+    setInterval(updateUI, 1000);
+    initSupabase();
 
-els.smokeBtn.addEventListener('click', smoke);
-els.resetBtn.addEventListener('click', reset);
-els.restDayToggle.addEventListener('change', toggleRestDay);
-els.buyPackBtn.addEventListener('click', buyPack);
-els.packPriceInput.addEventListener('input', updatePrice);
-els.breatheBtn.addEventListener('click', openBreathe);
-els.savePrefsBtn.addEventListener('click', savePreferences);
-// Global scope for HTML click handler
-window.closeBreathe = closeBreathe;
+    els.smokeBtn.addEventListener('click', smoke);
+    els.resetBtn.addEventListener('click', reset);
+    els.restDayToggle.addEventListener('change', toggleRestDay);
+    els.buyPackBtn.addEventListener('click', buyPack);
+    els.packPriceInput.addEventListener('input', updatePrice);
+    els.breatheBtn.addEventListener('click', openBreathe);
+    els.savePrefsBtn.addEventListener('click', savePreferences);
+    els.enableNotifyBtn.addEventListener('click', requestNotificationPermission);
+    // Global scope for HTML click handler
+    window.closeBreathe = closeBreathe;
 
-// Sync Listeners
-els.saveConfigBtn.addEventListener('click', saveSupabaseConfig);
-els.loginBtn.addEventListener('click', handleLogin);
-els.signupBtn.addEventListener('click', handleSignup);
-els.logoutBtn.addEventListener('click', handleLogout);
-els.forceSyncBtn.addEventListener('click', pullData);
+    // Sync Listeners
+    els.saveConfigBtn.addEventListener('click', saveSupabaseConfig);
+    els.loginBtn.addEventListener('click', handleLogin);
+    els.signupBtn.addEventListener('click', handleSignup);
+    els.logoutBtn.addEventListener('click', handleLogout);
+    els.forceSyncBtn.addEventListener('click', pullData);
+} catch (err) {
+    console.error('Critical initialization error:', err);
+    alert('App failed to load: ' + err.message + '. Please try clearing your browser data/cache.');
+}
