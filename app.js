@@ -2,6 +2,10 @@ const STORAGE_KEY = 'smokeless_data';
 const SUPABASE_CONFIG_KEY = 'smokeless_supabase_config';
 const SPACING_MS = 2 * 60 * 60 * 1000; // 2 hours in ms
 
+// Default Credentials (hardcoded for convenience)
+const DEFAULT_SB_URL = 'https://lmsolgyrlsevapbimyad.supabase.co';
+const DEFAULT_SB_KEY = 'sb_publishable_rU97_8A8SCP1Vr_wnfuOuA_IFhAgRF9';
+
 const els = {
     smokeBtn: document.getElementById('smoke-btn'),
     count: document.getElementById('count'),
@@ -15,6 +19,12 @@ const els = {
     buyPackBtn: document.getElementById('buy-pack-btn'),
     packPriceInput: document.getElementById('pack-price'),
     savingsDisplay: document.getElementById('savings-display'),
+    // Charts
+    weeklyChart: document.getElementById('weekly-chart'),
+    // Breathing
+    breatheBtn: document.getElementById('breathe-btn'),
+    breatheModal: document.getElementById('breathe-modal'),
+    breatheInstruction: document.getElementById('breathe-instruction'),
     // Sync UI
     sbUrl: document.getElementById('sb-url'),
     sbKey: document.getElementById('sb-key'),
@@ -38,7 +48,8 @@ let state = {
     date: new Date().toDateString(),
     isRestDay: false,
     cigsInPack: 20,
-    packPrice: 0
+    packPrice: 0,
+    history: [] // { date: string, count: number }
 };
 
 let supabase = null;
@@ -50,18 +61,36 @@ function loadState() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
         const parsed = JSON.parse(stored);
-        if (parsed.date !== new Date().toDateString()) {
+        const today = new Date().toDateString();
+
+        // Check if day changed
+        if (parsed.date !== today) {
+            // Archive previous day if not already in history
+            const history = Array.isArray(parsed.history) ? parsed.history : [];
+            const lastEntry = history.length > 0 ? history[history.length - 1] : null;
+            
+            // Only push if the date is different from the last saved entry
+            if (!lastEntry || lastEntry.date !== parsed.date) {
+                history.push({ date: parsed.date, count: parsed.count });
+            }
+            
+            // Limit history to last 30 days
+            if (history.length > 30) history.shift();
+
             state = {
-                lastSmoked: parsed.lastSmoked,
+                lastSmoked: parsed.lastSmoked, // Keep timer info
                 count: 0,
-                date: new Date().toDateString(),
+                date: today,
                 isRestDay: false,
                 cigsInPack: parsed.cigsInPack !== undefined ? parsed.cigsInPack : 20,
-                packPrice: parsed.packPrice || 0
+                packPrice: parsed.packPrice || 0,
+                history: history
             };
             saveState();
         } else {
+            // Same day, just load
             state = { ...state, ...parsed };
+            if (!state.history) state.history = [];
             if (state.cigsInPack === undefined) state.cigsInPack = 20;
             if (state.packPrice === undefined) state.packPrice = 0;
         }
@@ -86,6 +115,7 @@ function updateUI() {
 
     els.packPriceInput.value = state.packPrice || '';
     updateSavingsDisplay();
+    renderChart();
 
     const now = Date.now();
     const nextAllowed = state.lastSmoked + SPACING_MS;
@@ -133,6 +163,48 @@ function updateSavingsDisplay() {
             </li>
         </ul>
     `;
+}
+
+function renderChart() {
+    if (!els.weeklyChart) return;
+    
+    // Get last 7 entries from history + current day
+    const historyData = [...state.history];
+    // Add current day temp view
+    historyData.push({ date: 'Today', count: state.count });
+    
+    // Slice last 7
+    const data = historyData.slice(-7);
+
+    if (data.length === 0) {
+        els.weeklyChart.innerHTML = '<p style="text-align:center; color:#999; font-size:0.8rem; width:100%;">Start tracking today!</p>';
+        return;
+    }
+
+    // Find max for scaling
+    const maxVal = Math.max(...data.map(d => d.count), 10); // Min max is 10 for visuals
+
+    let html = '';
+    data.forEach(d => {
+        const heightPct = Math.min((d.count / maxVal) * 100, 100);
+        // Shorten date format: "Mon", "Tue" or "Today"
+        let label = d.date === 'Today' ? 'Today' : new Date(d.date).toLocaleDateString('en-US', { weekday: 'short' });
+        
+        // Color logic: Green if <= 5, Red if > 8, Yellow in between
+        let color = 'var(--primary)';
+        if (d.count > 8) color = 'var(--danger)';
+        else if (d.count > 5) color = '#FFC107'; // Amber
+
+        html += `
+            <div class="chart-bar-group">
+                <span class="chart-value">${d.count}</span>
+                <div class="chart-bar" style="height: ${heightPct}%; background-color: ${color};"></div>
+                <span class="chart-label">${label}</span>
+            </div>
+        `;
+    });
+    
+    els.weeklyChart.innerHTML = html;
 }
 
 function formatMoney(amount) {
@@ -192,6 +264,28 @@ function updatePrice() {
     state.packPrice = els.packPriceInput.value;
     saveState();
     updateUI();
+}
+
+// --- BREATHING ---
+function openBreathe() {
+    els.breatheModal.classList.remove('hidden');
+    startBreathingCycle();
+}
+
+function closeBreathe() {
+    els.breatheModal.classList.add('hidden');
+    // Stop cycle?
+}
+
+// Simple text update for breathing
+function startBreathingCycle() {
+    // CSS animation handles the circle, we just update text roughly
+    // 4s in, 4s out = 8s cycle
+    // We won't strictly sync text with JS interval to CSS, just a simple helper
+    const text = els.breatheInstruction;
+    text.textContent = "Breathe In...";
+    
+    // We rely on CSS animation mainly.
 }
 
 // --- SUPABASE SYNC ---
@@ -348,6 +442,9 @@ els.resetBtn.addEventListener('click', reset);
 els.restDayToggle.addEventListener('change', toggleRestDay);
 els.buyPackBtn.addEventListener('click', buyPack);
 els.packPriceInput.addEventListener('input', updatePrice);
+els.breatheBtn.addEventListener('click', openBreathe);
+// Global scope for HTML click handler
+window.closeBreathe = closeBreathe;
 
 // Sync Listeners
 els.saveConfigBtn.addEventListener('click', saveSupabaseConfig);

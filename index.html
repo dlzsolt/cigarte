@@ -38,6 +38,11 @@
                 🚬 Smoke One
             </button>
 
+            <!-- Secondary Actions -->
+            <button id="breathe-btn" class="btn-secondary" style="background-color: #0288D1; margin-bottom: 25px; margin-top: 0;">
+                🧘 Panic / Breathe
+            </button>
+
             <!-- Dashboard Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
@@ -53,6 +58,15 @@
                     <span class="stat-value" id="pack-count-display">20</span>
                 </div>
             </div>
+
+            <!-- Weekly Chart -->
+            <section class="card">
+                <h2>📊 Last 7 Days</h2>
+                <div id="weekly-chart" class="chart-container">
+                    <!-- Bars injected by JS -->
+                    <p style="text-align:center; color:#999; font-size:0.8rem;">No history yet. Check back tomorrow!</p>
+                </div>
+            </section>
             
             <button id="reset-btn" class="btn-text">Reset Daily Count</button>
         </div>
@@ -194,6 +208,17 @@
         <div class="toast-content">
             <span>New version available!</span>
             <button id="update-btn" class="btn-update">Update</button>
+        </div>
+    </div>
+
+    <!-- Breathing Modal -->
+    <div id="breathe-modal" class="modal hidden">
+        <div class="modal-content breathe-content">
+            <span class="close-modal" onclick="closeBreathe()">&times;</span>
+            <h2>Breathe In...</h2>
+            <div class="breathing-circle"></div>
+            <p id="breathe-instruction">Hold...</p>
+            <button class="btn-text" onclick="closeBreathe()">I'm calm now</button>
         </div>
     </div>
 
