@@ -57,6 +57,7 @@ function updateUI() {
 
     els.count.textContent = state.count;
     els.packCount.textContent = state.cigsInPack;
+    if(els.packCountDisplay) els.packCountDisplay.textContent = state.cigsInPack;
     
     // Work Day (9-10h free) = ~5 cigs
     // Rest Day (15h free) = ~8 cigs

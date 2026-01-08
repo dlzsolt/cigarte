@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Smoke Less – Spacing Plan</title>
     <link rel="manifest" href="manifest.json">
     <link rel="stylesheet" href="style.css">
@@ -13,84 +13,138 @@
 <body>
     <header>
         <h1>Smoke Less</h1>
-        <p class="subtitle">Spacing Plan</p>
     </header>
 
     <main>
-        <section class="card routine">
-            <h2>Daily Routine</h2>
-            <ul>
-                <li><strong>Wake up:</strong> 07:00</li>
-                <li><strong>Work:</strong> 5–6 hours</li>
-                <li><strong>Free time:</strong> 9–10 hours</li>
-                <li><strong>Sleep:</strong> 22:00</li>
-            </ul>
-        </section>
-
-        <section class="card plan">
-            <h2>The Plan</h2>
-            <div class="rule">
-                <h3>🚫 Stop Chain Smoking</h3>
-                <p>No two cigarettes within 30 mins.</p>
-            </div>
-            <div class="rule">
-                <h3>⏳ Spacing</h3>
-                <p>1 cigarette every 2 hours during free time.</p>
-            </div>
-            <div class="summary">
-                <p>Free time: <strong>9–10h</strong> → <strong>4–5 cigs/day</strong></p>
-                <p>Pack (20) → <strong>15–16 left</strong></p>
-            </div>
-        </section>
-
-        <section class="card tracker">
-            <h2>Tracker</h2>
-            <div class="mode-toggle" style="text-align: center; margin-bottom: 15px;">
-                <label style="font-size: 1.1rem; cursor: pointer;">
-                    <input type="checkbox" id="rest-day-toggle"> 🏖️ Rest Day (No Work)
+        <!-- TAB 1: TRACKER -->
+        <div id="tab-track" class="tab-content active">
+            <!-- Rest Day Toggle -->
+            <div class="toggle-container">
+                <label class="toggle-label">
+                    <input type="checkbox" id="rest-day-toggle">
+                    <span class="toggle-text">🏖️ Rest Day Mode</span>
                 </label>
             </div>
-            <div id="status-display">
+
+            <!-- Timer Status -->
+            <div class="timer-card">
                 <p id="timer-text">Ready</p>
                 <div id="countdown">00:00:00</div>
             </div>
-            <button id="smoke-btn" class="btn-primary">🚬 Smoke One</button>
-            <p class="stats">Smoked today: <span id="count">0</span></p>
-            <p class="stats">Remaining allowed (approx): <span id="remaining">5</span></p>
-        </section>
 
-        <section class="card pocket">
-            <h2>📦 In Pocket</h2>
-            <div style="text-align: center;">
-                <p class="stats" style="font-size: 1.5rem; font-weight: bold; margin-bottom: 15px;">
-                    <span id="pack-count">20</span> left
-                </p>
-                <button id="buy-pack-btn" style="padding: 10px 20px; background-color: var(--primary-dark); color: white; border: none; border-radius: 6px; cursor: pointer;">
-                    + Buy Pack (20)
-                </button>
-            </div>
-        </section>
+            <!-- Main Action -->
+            <button id="smoke-btn" class="btn-primary btn-large">
+                🚬 Smoke One
+            </button>
 
-        <section class="card savings">
-            <h2>💰 Savings Calculator</h2>
-            <div style="margin-bottom: 15px;">
-                <label for="pack-price">Price per pack:</label>
-                <input type="number" id="pack-price" placeholder="e.g. 10.00" style="padding: 5px; width: 80px; border: 1px solid #ccc; border-radius: 4px;">
+            <!-- Dashboard Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-label">Today</span>
+                    <span class="stat-value" id="count">0</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Allowed</span>
+                    <span class="stat-value" id="remaining">5</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">In Pocket</span>
+                    <span class="stat-value" id="pack-count-display">20</span>
+                </div>
             </div>
-            <div id="savings-display" style="font-size: 0.95rem;">
-                <p>Please enter pack price above.</p>
-            </div>
-        </section>
-        
-        <button id="reset-btn" class="btn-text">Reset Day</button>
+            
+            <button id="reset-btn" class="btn-text">Reset Daily Count</button>
+        </div>
+
+        <!-- TAB 2: WALLET -->
+        <div id="tab-wallet" class="tab-content">
+            <section class="card">
+                <h2>📦 Pocket Manager</h2>
+                <div class="pocket-actions">
+                    <p class="pocket-status"><span id="pack-count">20</span> cigarettes left</p>
+                    <button id="buy-pack-btn" class="btn-secondary">
+                        + Buy New Pack (20)
+                    </button>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>💰 Savings Calculator</h2>
+                <div class="input-group">
+                    <label for="pack-price">Price per pack:</label>
+                    <input type="number" id="pack-price" placeholder="0.00">
+                </div>
+                <div id="savings-display" class="savings-results">
+                    <p>Enter price to see savings.</p>
+                </div>
+            </section>
+        </div>
+
+        <!-- TAB 3: GUIDE -->
+        <div id="tab-guide" class="tab-content">
+            <section class="card">
+                <h2>Daily Routine</h2>
+                <ul class="info-list">
+                    <li><strong>☀️ Wake up:</strong> 07:00</li>
+                    <li><strong>💼 Work:</strong> 5–6 hours</li>
+                    <li><strong>🏠 Free time:</strong> 9–10 hours</li>
+                    <li><strong>🌙 Sleep:</strong> 22:00</li>
+                </ul>
+            </section>
+
+            <section class="card">
+                <h2>The Plan</h2>
+                <div class="rule-item">
+                    <h3>🚫 Stop Chain Smoking</h3>
+                    <p>No two cigarettes within 30 mins.</p>
+                </div>
+                <div class="rule-item">
+                    <h3>⏳ Spacing</h3>
+                    <p>1 cigarette every 2 hours during free time.</p>
+                </div>
+                <div class="summary-box">
+                    <p>Goal: <strong>4–5 cigs/day</strong></p>
+                    <p>Result: <strong>15–16 left</strong> in pack</p>
+                </div>
+            </section>
+        </div>
     </main>
 
-    <footer>
-        <p>Stay strong. You got this.</p>
-    </footer>
+    <!-- Bottom Navigation -->
+    <nav class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('tab-track')">
+            <span class="nav-icon">🕒</span>
+            <span class="nav-label">Track</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('tab-wallet')">
+            <span class="nav-icon">💰</span>
+            <span class="nav-label">Wallet</span>
+        </button>
+        <button class="nav-item" onclick="switchTab('tab-guide')">
+            <span class="nav-icon">📜</span>
+            <span class="nav-label">Guide</span>
+        </button>
+    </nav>
 
     <script src="app.js"></script>
     <script>
+        // Simple tab switching logic inline or in app.js
+        function switchTab(tabId) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            
+            // Show target tab
+            document.getElementById(tabId).classList.add('active');
+            
+            // Highlight nav
+            const navBtn = document.querySelector(`button[onclick="switchTab('${tabId}')"]`);
+            if(navBtn) navBtn.classList.add('active');
+            
+            // Scroll to top
+            window.scrollTo(0,0);
+        }
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('./service-worker.js')
