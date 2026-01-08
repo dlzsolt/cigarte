@@ -136,6 +136,7 @@ let supabaseClient = null;
 let currentUser = null;
 let notificationScheduled = false;
 let isTestMode = false;
+let titleInterval = null; // For title flashing
 
 // --- STATE MANAGEMENT ---
 
@@ -236,6 +237,12 @@ function updateUI() {
         els.countdown.textContent = '00:00:00';
         els.countdown.style.color = 'var(--primary)';
         
+        // Start Title Flashing & Badge
+        startTitleFlashing();
+        if ('setAppBadge' in navigator) {
+            navigator.setAppBadge(1).catch(e => console.log('Badge error', e));
+        }
+        
         // Reset notification flag when timer is done
         if (notificationScheduled && diff <= 0) {
             notificationScheduled = false;
@@ -248,8 +255,32 @@ function updateUI() {
         els.countdown.textContent = formatTime(diff);
         els.countdown.style.color = 'var(--danger)';
         
+        // Stop Flashing & Clear Badge
+        stopTitleFlashing();
+        if ('clearAppBadge' in navigator) {
+            navigator.clearAppBadge().catch(e => console.log('Badge clear error', e));
+        }
+        
         // Schedule notification logic (handled by polling in setInterval)
         notificationScheduled = true;
+    }
+}
+
+// --- TITLE FLASHING ---
+function startTitleFlashing() {
+    if (titleInterval) return; // Already running
+    let flashState = false;
+    titleInterval = setInterval(() => {
+        document.title = flashState ? "🔔 SMOKE NOW" : "Smoke Less";
+        flashState = !flashState;
+    }, 1000);
+}
+
+function stopTitleFlashing() {
+    if (titleInterval) {
+        clearInterval(titleInterval);
+        titleInterval = null;
+        document.title = "Smoke Less";
     }
 }
 
@@ -481,7 +512,10 @@ function sendNotification() {
         const notif = new Notification('Smoke Less', {
             body: getDynamicMessage(),
             icon: 'icon.svg',
-            vibrate: [200, 100, 200]
+            vibrate: [200, 100, 200],
+            requireInteraction: true, // Keeps notification on screen until dismissed
+            tag: 'smoke-alert',       // Replaces older notifications of same type
+            renotify: true            // Plays sound/vibe again even if replacing
         });
         notif.onclick = () => {
             window.focus();
@@ -490,7 +524,7 @@ function sendNotification() {
     } else {
         // Fallback alert for iOS if notifications blocked/unsupported but app is open
         // Use a gentle toast or title change instead of blocking alert
-        document.title = "✅ SMOKE NOW - Smoke Less";
+        // Title change is handled by startTitleFlashing() now
     }
 }
 
@@ -699,7 +733,10 @@ try {
                     new Notification('Smoke Less', {
                         body: '🔔 This is your delayed test notification!',
                         icon: 'icon.svg',
-                        vibrate: [200, 100, 200]
+                        vibrate: [200, 100, 200],
+                        requireInteraction: true,
+                        tag: 'test-alert',
+                        renotify: true
                     });
                 }, 15000); // 15 seconds delay
                 
