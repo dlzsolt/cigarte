@@ -35,6 +35,7 @@
 
             <!-- Timer Status -->
             <div class="timer-card">
+                <div id="streak-badge" class="streak-badge hidden">🔥 0 Day Streak</div>
                 <p id="timer-text">Ready</p>
                 <div id="countdown">00:00:00</div>
             </div>
@@ -59,6 +60,18 @@
                     <span class="stat-value" id="pack-count-display">20</span>
                 </div>
             </div>
+
+            <!-- Weekly Chart -->
+            <section class="card">
+                <h2>❤️ Health Status</h2>
+                <div id="health-widget" class="health-widget">
+                    <p class="health-status">Analyzing...</p>
+                    <div class="health-progress-bg">
+                        <div id="health-progress-bar" class="health-progress-bar" style="width: 0%"></div>
+                    </div>
+                    <p id="health-detail" class="health-detail">Smoke less to see benefits.</p>
+                </div>
+            </section>
 
             <!-- Weekly Chart -->
             <section class="card">

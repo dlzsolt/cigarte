@@ -20,6 +20,12 @@ const els = {
     editPackBtn: document.getElementById('edit-pack-btn'),
     packPriceInput: document.getElementById('pack-price'),
     savingsDisplay: document.getElementById('savings-display'),
+    // Health & Streak
+    streakBadge: document.getElementById('streak-badge'),
+    healthWidget: document.getElementById('health-widget'),
+    healthStatus: document.querySelector('.health-status'),
+    healthBar: document.getElementById('health-progress-bar'),
+    healthDetail: document.getElementById('health-detail'),
     // Charts
     weeklyChart: document.getElementById('weekly-chart'),
     // Preferences
@@ -210,6 +216,8 @@ function updateUI() {
     els.packPriceInput.value = state.packPrice || '';
     updateSavingsDisplay();
     renderChart();
+    updateStreak();
+    updateHealthWidget();
 
     const now = Date.now();
     const currentSpacing = isTestMode ? 10000 : SPACING_MS; // 10 seconds in test mode
@@ -366,6 +374,80 @@ function formatTime(ms) {
     const m = Math.floor((totalSeconds % 3600) / 60);
     const s = totalSeconds % 60;
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+// --- GAMIFICATION & HEALTH ---
+
+function updateStreak() {
+    if (!els.streakBadge) return;
+    
+    // Calculate streak: consecutive days in history where count <= dailyLimit (e.g., 5 or 8)
+    // Note: This logic assumes 'history' is ordered by date.
+    let streak = 0;
+    const history = [...state.history].reverse(); // Newest first
+    
+    // Check yesterday/today continuity is complex with simple dates.
+    // Simplification: Just count how many "good days" are at the end of the history array.
+    
+    for (const day of history) {
+        // Define limit based on Rest Day preference? Or strict 5?
+        // Let's say strict 5 for "Smoke Less" streak, or 8 if rest day was logged (but we don't store isRestDay per history item yet).
+        // Default to 8 to be encouraging.
+        if (day.count <= 8) {
+            streak++;
+        } else {
+            break; // Streak broken
+        }
+    }
+    
+    // Add today if valid so far
+    if (state.count <= 8) {
+        // Only count today if it's the end of the day? 
+        // No, let's just show "Current Streak" including past days. 
+        // If today isn't over, we don't increment streak yet unless we want to be optimistic.
+        // Let's stick to completed days from history.
+    }
+
+    if (streak > 0) {
+        els.streakBadge.textContent = `🔥 ${streak} Day Streak`;
+        els.streakBadge.classList.remove('hidden');
+    } else {
+        els.streakBadge.classList.add('hidden');
+    }
+}
+
+function updateHealthWidget() {
+    if (!els.healthStatus) return;
+
+    const now = Date.now();
+    const elapsed = now - state.lastSmoked;
+    const minutes = elapsed / 1000 / 60;
+    
+    let status = "";
+    let detail = "";
+    let progress = 0;
+    
+    if (minutes < 20) {
+        status = "⚠️ Pulse Recovering";
+        detail = "In 20 mins, your heart rate will drop to normal.";
+        progress = (minutes / 20) * 100;
+    } else if (minutes < 120) {
+        status = "❤️ Heart Rate Normal";
+        detail = "Blood pressure is returning to normal levels.";
+        progress = ((minutes - 20) / 100) * 100;
+    } else if (minutes < 480) { // 8 hours
+        status = "🌬️ Oxygen Levels Rising";
+        detail = "Carbon monoxide is leaving your blood.";
+        progress = ((minutes - 120) / 360) * 100;
+    } else {
+        status = "✅ Lungs Clearing";
+        detail = "Great job! Your risk of heart attack is beginning to drop.";
+        progress = 100;
+    }
+    
+    els.healthStatus.textContent = status;
+    els.healthDetail.textContent = detail;
+    els.healthBar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
 }
 
 // --- ACTIONS ---
