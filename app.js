@@ -21,10 +21,6 @@ const els = {
     savingsDisplay: document.getElementById('savings-display'),
     // Charts
     weeklyChart: document.getElementById('weekly-chart'),
-    // Breathing
-    breatheBtn: document.getElementById('breathe-btn'),
-    breatheModal: document.getElementById('breathe-modal'),
-    breatheInstruction: document.getElementById('breathe-instruction'),
     // Preferences
     prefPackSize: document.getElementById('pref-pack-size'),
     workStart: document.getElementById('work-start'),
@@ -402,29 +398,6 @@ function sendNotification() {
     }
 }
 
-// --- BREATHING ---
-function openBreathe() {
-    els.breatheModal.classList.remove('hidden');
-    startBreathingCycle();
-}
-
-function closeBreathe() {
-    console.log('Closing breathe modal');
-    if (els.breatheModal) els.breatheModal.classList.add('hidden');
-    // Stop cycle?
-}
-
-// Simple text update for breathing
-function startBreathingCycle() {
-    // CSS animation handles the circle, we just update text roughly
-    // 4s in, 4s out = 8s cycle
-    // We won't strictly sync text with JS interval to CSS, just a simple helper
-    const text = els.breatheInstruction;
-    text.textContent = "Breathe In...";
-    
-    // We rely on CSS animation mainly.
-}
-
 // --- SUPABASE SYNC ---
 
 function initSupabase() {
@@ -595,7 +568,6 @@ try {
     els.restDayToggle.addEventListener('change', toggleRestDay);
     els.buyPackBtn.addEventListener('click', buyPack);
     els.packPriceInput.addEventListener('input', updatePrice);
-    els.breatheBtn.addEventListener('click', openBreathe);
     els.savePrefsBtn.addEventListener('click', savePreferences);
     els.enableNotifyBtn.addEventListener('click', requestNotificationPermission);
     
@@ -606,24 +578,6 @@ try {
             updateUI();
         });
     }
-
-    // Close Breathe Modal Listeners
-    const closeX = document.getElementById('close-breathe-x');
-    const closeBtn = document.getElementById('close-breathe-btn');
-    if (closeX) closeX.addEventListener('click', closeBreathe);
-    if (closeBtn) closeBtn.addEventListener('click', closeBreathe);
-    
-    // Close on clicking outside
-    if (els.breatheModal) {
-        els.breatheModal.addEventListener('click', (e) => {
-            if (e.target === els.breatheModal) {
-                closeBreathe();
-            }
-        });
-    }
-
-    // Global scope for HTML click handler
-    window.closeBreathe = closeBreathe;
 
     // Sync Listeners
     els.saveConfigBtn.addEventListener('click', saveSupabaseConfig);
