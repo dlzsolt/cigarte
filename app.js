@@ -591,6 +591,16 @@ try {
     
     if (els.testNotifyBtn) {
         els.testNotifyBtn.addEventListener('click', () => {
+            // Unlock audio immediately on click
+            if (els.notificationSound) {
+                els.notificationSound.volume = 0; // Mute initially
+                els.notificationSound.play().then(() => {
+                    els.notificationSound.pause();
+                    els.notificationSound.currentTime = 0;
+                    els.notificationSound.volume = 1; // Unmute for later
+                }).catch(e => console.log('Audio unlock failed:', e));
+            }
+
             if (Notification.permission === 'granted') {
                 alert('Wait 15 seconds... Lock your phone now to test!');
                 
