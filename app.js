@@ -409,7 +409,8 @@ function openBreathe() {
 }
 
 function closeBreathe() {
-    els.breatheModal.classList.add('hidden');
+    console.log('Closing breathe modal');
+    if (els.breatheModal) els.breatheModal.classList.add('hidden');
     // Stop cycle?
 }
 

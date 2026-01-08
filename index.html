@@ -261,11 +261,11 @@
     <!-- Breathing Modal -->
     <div id="breathe-modal" class="modal hidden">
         <div class="modal-content breathe-content">
-            <span id="close-breathe-x" class="close-modal">&times;</span>
+            <span id="close-breathe-x" class="close-modal" onclick="closeBreathe()">&times;</span>
             <h2>Breathe In...</h2>
             <div class="breathing-circle"></div>
             <p id="breathe-instruction">Hold...</p>
-            <button id="close-breathe-btn" class="btn-text">I'm calm now</button>
+            <button id="close-breathe-btn" class="btn-text" onclick="closeBreathe()">I'm calm now</button>
         </div>
     </div>
 
