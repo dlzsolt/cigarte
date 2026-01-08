@@ -17,6 +17,7 @@ const els = {
     packCount: document.getElementById('pack-count'),
     packCountDisplay: document.getElementById('pack-count-display'),
     buyPackBtn: document.getElementById('buy-pack-btn'),
+    editPackBtn: document.getElementById('edit-pack-btn'),
     packPriceInput: document.getElementById('pack-price'),
     savingsDisplay: document.getElementById('savings-display'),
     // Charts
@@ -424,6 +425,22 @@ function buyPack() {
     }
 }
 
+function editPack() {
+    const current = state.cigsInPack;
+    const input = prompt(`Manually set cigarettes in pack (0-${state.packSize}):`, current);
+    
+    if (input !== null) {
+        const val = parseInt(input);
+        if (!isNaN(val) && val >= 0 && val <= 100) {
+            state.cigsInPack = val;
+            saveState();
+            updateUI();
+        } else {
+            alert('Please enter a valid number.');
+        }
+    }
+}
+
 function updatePrice() {
     state.packPrice = els.packPriceInput.value;
     saveState();
@@ -714,6 +731,7 @@ try {
     els.resetBtn.addEventListener('click', reset);
     els.restDayToggle.addEventListener('change', toggleRestDay);
     els.buyPackBtn.addEventListener('click', buyPack);
+    if(els.editPackBtn) els.editPackBtn.addEventListener('click', editPack);
     els.packPriceInput.addEventListener('change', updatePrice); // Changed from 'input' to 'change' for better sync
     els.savePrefsBtn.addEventListener('click', savePreferences);
     els.enableNotifyBtn.addEventListener('click', requestNotificationPermission);
