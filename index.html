@@ -9,6 +9,7 @@
     <link rel="icon" href="icon.svg" type="image/svg+xml">
     <meta name="theme-color" content="#4CAF50">
     <meta name="description" content="A simple plan to reduce smoking by spacing cigarettes.">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
     <header>
@@ -124,7 +125,69 @@
             <span class="nav-icon">📜</span>
             <span class="nav-label">Guide</span>
         </button>
+        <button class="nav-item" onclick="switchTab('tab-settings')">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-label">Sync</span>
+        </button>
     </nav>
+
+    <!-- TAB 4: SETTINGS (SYNC) -->
+    <div id="tab-settings" class="tab-content">
+        <section class="card">
+            <h2>☁️ Cloud Sync</h2>
+            <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">
+                Sync your data across devices using Supabase.
+            </p>
+
+            <div id="sync-setup-form">
+                <div class="input-group-stack">
+                    <label>Supabase URL</label>
+                    <input type="text" id="sb-url" placeholder="https://xyz.supabase.co">
+                </div>
+                <div class="input-group-stack">
+                    <label>Supabase Anon Key</label>
+                    <input type="password" id="sb-key" placeholder="eyJh...">
+                </div>
+                <button id="save-config-btn" class="btn-primary">Connect</button>
+            </div>
+
+            <div id="sync-auth-form" class="hidden">
+                <div class="status-badge" id="connection-status">🟢 Connected</div>
+                
+                <div id="auth-inputs">
+                    <div class="input-group-stack">
+                        <label>Email</label>
+                        <input type="email" id="auth-email" placeholder="you@example.com">
+                    </div>
+                    <div class="input-group-stack">
+                        <label>Password</label>
+                        <input type="password" id="auth-password" placeholder="********">
+                    </div>
+                    <div class="auth-buttons">
+                        <button id="login-btn" class="btn-secondary">Log In</button>
+                        <button id="signup-btn" class="btn-text">Sign Up</button>
+                    </div>
+                </div>
+
+                <div id="user-info" class="hidden" style="text-align: center;">
+                    <p>Logged in as: <strong id="user-email-display"></strong></p>
+                    <button id="logout-btn" class="btn-text" style="color: var(--danger);">Log Out</button>
+                    <button id="force-sync-btn" class="btn-secondary">Force Sync Now</button>
+                </div>
+            </div>
+        </section>
+        
+        <section class="card">
+            <h2>ℹ️ How to set up</h2>
+            <ol class="info-list" style="padding-left: 20px; font-size: 0.9rem;">
+                <li>Go to <strong>supabase.com</strong> and create a free project.</li>
+                <li>Go to <strong>Project Settings > API</strong>.</li>
+                <li>Copy <strong>URL</strong> and <strong>anon public key</strong>.</li>
+                <li>Paste them above and click Connect.</li>
+                <li>Sign up with an email to start syncing!</li>
+            </ol>
+        </section>
+    </div>
 
     <!-- Update Notification -->
     <div id="update-toast" class="update-toast hidden">
