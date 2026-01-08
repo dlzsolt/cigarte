@@ -523,6 +523,11 @@ input:focus {
     animation: slideUp 0.4s cubic-bezier(0.2, 0.0, 0, 1.0);
 }
 
+@keyframes slideUp {
+    from { transform: translate(-50%, 100%); opacity: 0; }
+    to { transform: translate(-50%, 0); opacity: 1; }
+}
+
 .update-toast.hidden { display: none; }
 
 .btn-update {
@@ -535,20 +540,110 @@ input:focus {
     text-transform: uppercase;
 }
 
-/* Breathing */
+/* SOS Button */
+.btn-sos {
+    background-color: var(--md-sys-color-error);
+    color: var(--md-sys-color-on-error);
+    border: none;
+    border-radius: 100px;
+    padding: 12px 24px;
+    font-weight: bold;
+    font-size: 1rem;
+    cursor: pointer;
+    box-shadow: var(--elevation-2);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+/* Breathing Circle */
 .breathing-circle {
     width: 120px;
     height: 120px;
     background: var(--md-sys-color-primary-container);
     border-radius: 50%;
     margin: 40px auto;
-    opacity: 0.6;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-weight: bold;
+    color: var(--md-sys-color-on-primary-container);
     animation: breathe 8s infinite ease-in-out;
 }
 
 @keyframes breathe {
-    0%, 100% { transform: scale(1); opacity: 0.6; }
-    50% { transform: scale(1.8); opacity: 0.3; }
+    0%, 100% { transform: scale(1); content: "Inhale"; }
+    50% { transform: scale(1.5); content: "Exhale"; }
+}
+
+/* Achievement Grid */
+.achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    gap: 16px;
+    padding: 10px 0;
+}
+
+.badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    opacity: 0.4; /* Locked state */
+    filter: grayscale(1);
+    transition: all 0.3s;
+}
+
+.badge.unlocked {
+    opacity: 1;
+    filter: grayscale(0);
+    transform: scale(1.1);
+}
+
+.badge-icon {
+    font-size: 2.5rem;
+    margin-bottom: 5px;
+}
+
+.badge-name {
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+/* Health Widget */
+.health-widget {
+    text-align: center;
+    padding: 10px 0;
+}
+
+.health-status {
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: var(--md-sys-color-primary);
+}
+
+.health-progress-bg {
+    background: var(--md-sys-color-surface-variant);
+    height: 12px;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.health-progress-bar {
+    height: 100%;
+    background: linear-gradient(90deg, var(--md-sys-color-primary), var(--md-sys-color-tertiary));
+    transition: width 1s ease-out;
+}
+
+.health-detail {
+    font-size: 0.85rem;
+    color: var(--md-sys-color-on-surface-variant);
 }
 
 /* Lists */

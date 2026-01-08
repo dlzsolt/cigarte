@@ -31,6 +31,8 @@
                     <input type="checkbox" id="rest-day-toggle">
                     <span class="toggle-text">🏖️ Rest Day Mode</span>
                 </label>
+                <!-- SOS Button -->
+                <button id="sos-btn" class="btn-sos" aria-label="Panic Button">🆘 SOS</button>
             </div>
 
             <!-- Timer Status -->
@@ -264,6 +266,25 @@
                 <li>Sign up with an email to start syncing!</li>
             </ol>
         </section>
+    </div>
+
+    <!-- SOS Modal -->
+    <div id="sos-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>😰 Craving Panic?</h2>
+            <p>Take a deep breath. You can do this.</p>
+            
+            <div class="breathing-circle">
+                <span id="breath-text">Inhale</span>
+            </div>
+            
+            <div class="distraction-box">
+                <p id="distraction-text">Loading distraction...</p>
+                <button id="new-distraction-btn" class="btn-text">🔄 New Tip</button>
+            </div>
+            
+            <button id="close-sos-btn" class="btn-secondary">I'm okay now</button>
+        </div>
     </div>
 
     <!-- Update Notification -->

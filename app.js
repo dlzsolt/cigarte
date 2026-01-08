@@ -26,6 +26,18 @@ const els = {
     healthStatus: document.querySelector('.health-status'),
     healthBar: document.getElementById('health-progress-bar'),
     healthDetail: document.getElementById('health-detail'),
+    // Lifetime Stats
+    totalSaved: document.getElementById('total-saved'),
+    lifeRegained: document.getElementById('life-regained'),
+    // Achievements
+    achievementsGrid: document.getElementById('achievements-grid'),
+    // SOS
+    sosBtn: document.getElementById('sos-btn'),
+    sosModal: document.getElementById('sos-modal'),
+    closeSosBtn: document.getElementById('close-sos-btn'),
+    breathText: document.getElementById('breath-text'),
+    distractionText: document.getElementById('distraction-text'),
+    newDistractionBtn: document.getElementById('new-distraction-btn'),
     // Charts
     weeklyChart: document.getElementById('weekly-chart'),
     // Preferences
@@ -218,6 +230,8 @@ function updateUI() {
     renderChart();
     updateStreak();
     updateHealthWidget();
+    updateLifetimeStats();
+    renderAchievements();
 
     const now = Date.now();
     const currentSpacing = isTestMode ? 10000 : SPACING_MS; // 10 seconds in test mode
@@ -374,6 +388,110 @@ function formatTime(ms) {
     const m = Math.floor((totalSeconds % 3600) / 60);
     const s = totalSeconds % 60;
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+}
+
+// --- LIFETIME STATS ---
+function updateLifetimeStats() {
+    if (!els.totalSaved || !els.lifeRegained) return;
+
+    // Calculate total avoided (hypothetically, if user smoked 20/day before)
+    // This is rough estimation: (Days using app * 20) - Total Smoked
+    // We need total smoked count across all history
+    let totalSmoked = state.history.reduce((acc, curr) => acc + curr.count, 0) + state.count;
+    const daysActive = state.history.length + 1; // +1 for today
+    
+    // Assume baseline was 20 cigs/day (or user setting could be better, but we use 20 for now)
+    const baselineDaily = 20;
+    const totalAvoided = Math.max(0, (daysActive * baselineDaily) - totalSmoked);
+    
+    // Money Saved
+    const pricePerCig = (parseFloat(state.packPrice) || 0) / (state.packSize || 20);
+    const moneySaved = totalAvoided * pricePerCig;
+    
+    // Life Regained (11 mins per cig avoided)
+    const minutesRegained = totalAvoided * 11;
+    const hoursRegained = (minutesRegained / 60).toFixed(1);
+    
+    els.totalSaved.textContent = formatMoney(moneySaved);
+    els.totalSaved.style.color = '#4CAF50';
+    els.lifeRegained.textContent = `${hoursRegained}h`;
+    els.lifeRegained.style.color = '#2196F3';
+}
+
+// --- ACHIEVEMENTS ---
+const BADGES = [
+    { id: 'start', name: 'First Step', icon: '🌱', condition: (s) => s.history.length >= 1 },
+    { id: 'week', name: '1 Week', icon: '🗓️', condition: (s) => s.history.length >= 7 },
+    { id: 'streak3', name: '3 Day Streak', icon: '🔥', condition: (s) => getStreak(s) >= 3 },
+    { id: 'streak7', name: '7 Day Streak', icon: '🦁', condition: (s) => getStreak(s) >= 7 },
+    { id: 'saved10', name: 'Saved $10', icon: '💰', condition: (s) => getMoneySaved(s) >= 10 },
+    { id: 'saved50', name: 'Saved $50', icon: '💎', condition: (s) => getMoneySaved(s) >= 50 },
+    { id: 'avoided100', name: 'Avoided 100', icon: '🛡️', condition: (s) => getAvoided(s) >= 100 }
+];
+
+function renderAchievements() {
+    if (!els.achievementsGrid) return;
+    
+    let html = '';
+    BADGES.forEach(badge => {
+        const isUnlocked = badge.condition(state);
+        html += `
+            <div class="badge ${isUnlocked ? 'unlocked' : ''}">
+                <div class="badge-icon">${badge.icon}</div>
+                <div class="badge-name">${badge.name}</div>
+            </div>
+        `;
+    });
+    els.achievementsGrid.innerHTML = html;
+}
+
+// Helpers for achievements
+function getStreak(s) {
+    let streak = 0;
+    const history = [...s.history].reverse();
+    for (const day of history) {
+        if (day.count <= 8) streak++;
+        else break;
+    }
+    return streak;
+}
+
+function getAvoided(s) {
+    let totalSmoked = s.history.reduce((acc, curr) => acc + curr.count, 0) + s.count;
+    const daysActive = s.history.length + 1;
+    return Math.max(0, (daysActive * 20) - totalSmoked);
+}
+
+function getMoneySaved(s) {
+    const avoided = getAvoided(s);
+    const pricePerCig = (parseFloat(s.packPrice) || 0) / (s.packSize || 20);
+    return avoided * pricePerCig;
+}
+
+// --- SOS PANIC BUTTON ---
+const DISTRACTIONS = [
+    "Drink a large glass of water slowly.",
+    "Do 10 pushups right now.",
+    "Call a friend or family member.",
+    "Chew a piece of gum.",
+    "Go for a 5-minute walk.",
+    "List 5 reasons why you want to quit.",
+    "Brush your teeth.",
+    "Eat a piece of fruit."
+];
+
+function openSos() {
+    els.sosModal.classList.remove('hidden');
+    showNewDistraction();
+}
+
+function closeSos() {
+    els.sosModal.classList.add('hidden');
+}
+
+function showNewDistraction() {
+    const random = DISTRACTIONS[Math.floor(Math.random() * DISTRACTIONS.length)];
+    els.distractionText.textContent = random;
 }
 
 // --- GAMIFICATION & HEALTH ---
@@ -869,6 +987,11 @@ try {
             pullData();
         }
     });
+
+    // SOS Listeners
+    if (els.sosBtn) els.sosBtn.addEventListener('click', openSos);
+    if (els.closeSosBtn) els.closeSosBtn.addEventListener('click', closeSos);
+    if (els.newDistractionBtn) els.newDistractionBtn.addEventListener('click', showNewDistraction);
 
 } catch (err) {
     console.error('Critical initialization error:', err);
