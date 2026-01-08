@@ -4,7 +4,7 @@ const SPACING_MS = 2 * 60 * 60 * 1000; // 2 hours in ms
 
 // Default Credentials (hardcoded for convenience)
 const DEFAULT_SB_URL = 'https://lmsolgyrlsevapbimyad.supabase.co';
-const DEFAULT_SB_KEY = 'sb_publishable_rU97_8A8SCP1Vr_wnfuOuA_IFhAgRF9';
+const DEFAULT_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imxtc29sZ3lybHNldmFwYmlteWFkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njc4NjkyMTQsImV4cCI6MjA4MzQ0NTIxNH0.vu47GqcfPzf5cpHWvlzT9weDs1HlCSZK7fcyngieeNE';
 
 const els = {
     smokeBtn: document.getElementById('smoke-btn'),
