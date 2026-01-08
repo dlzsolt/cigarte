@@ -29,6 +29,7 @@ const els = {
     savePrefsBtn: document.getElementById('save-prefs-btn'),
     // Notifications
     enableNotifyBtn: document.getElementById('enable-notify-btn'),
+    testNotifyBtn: document.getElementById('test-notify-btn'),
     notifyStatus: document.getElementById('notify-status'),
     // Sync UI
     sbUrl: document.getElementById('sb-url'),
@@ -572,6 +573,21 @@ try {
     els.packPriceInput.addEventListener('input', updatePrice);
     els.savePrefsBtn.addEventListener('click', savePreferences);
     els.enableNotifyBtn.addEventListener('click', requestNotificationPermission);
+    
+    if (els.testNotifyBtn) {
+        els.testNotifyBtn.addEventListener('click', () => {
+            if (Notification.permission === 'granted') {
+                new Notification('Smoke Less', {
+                    body: '🔔 This is a test notification! It works.',
+                    icon: 'icon.svg',
+                    vibrate: [200, 100, 200]
+                });
+            } else {
+                alert('Please enable notifications first.');
+                requestNotificationPermission();
+            }
+        });
+    }
     
     // Test Mode Toggle
     if (els.testModeToggle) {
