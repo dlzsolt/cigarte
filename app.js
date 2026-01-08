@@ -14,6 +14,7 @@ const els = {
     slipUpBtn: document.getElementById('slip-up-btn'),
     // Stats
     count: document.getElementById('count'),
+    addExtraBtn: document.getElementById('add-extra-btn'),
     remaining: document.getElementById('remaining'),
     timerText: document.getElementById('timer-text'),
     countdown: document.getElementById('countdown'),
@@ -944,6 +945,9 @@ try {
     els.resetBtn.addEventListener('click', reset);
     els.restDayToggle.addEventListener('change', toggleRestDay);
     els.buyPackBtn.addEventListener('click', buyPack);
+    if(els.reduceTimeBtn) els.reduceTimeBtn.addEventListener('click', reduceTime);
+    if(els.slipUpBtn) els.slipUpBtn.addEventListener('click', slipUp);
+    if(els.addExtraBtn) els.addExtraBtn.addEventListener('click', addExtra);
     if(els.editPackBtn) els.editPackBtn.addEventListener('click', editPack);
     els.packPriceInput.addEventListener('change', updatePrice); // Changed from 'input' to 'change' for better sync
     els.savePrefsBtn.addEventListener('click', savePreferences);

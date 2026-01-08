@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smokeless-v32';
+const CACHE_NAME = 'smokeless-v33';
 const ASSETS = [
   './',
   './index.html',
