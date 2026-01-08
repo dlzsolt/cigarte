@@ -413,6 +413,24 @@ function savePreferences() {
 
 // --- NOTIFICATIONS ---
 
+const NOTIFICATION_MESSAGES = [
+    "You are allowed to smoke now.",
+    "Time for a break? Timer is up.",
+    "You're doing great! +2 Hours added to your streak.",
+    "Discipline is freedom. You are in control.",
+    "Pocket Check: You are saving money by waiting!",
+    "Health Tip: Your heart rate recovers in between smokes.",
+    "Stay strong. You decide when to smoke, not the addiction.",
+    "Level Up! Another session completed.",
+    "Breathe in... You can smoke now if you choose.",
+    "Remember your goal: Smoke Less, Live More."
+];
+
+function getDynamicMessage() {
+    const randomIndex = Math.floor(Math.random() * NOTIFICATION_MESSAGES.length);
+    return NOTIFICATION_MESSAGES[randomIndex];
+}
+
 function requestNotificationPermission() {
     if (!('Notification' in window)) {
         alert('This browser does not support notifications.');
@@ -461,7 +479,7 @@ function sendNotification() {
         // Check if we already sent one recently to avoid spam?
         // Actually, just send it.
         const notif = new Notification('Smoke Less', {
-            body: 'You are allowed to smoke now.',
+            body: getDynamicMessage(),
             icon: 'icon.svg',
             vibrate: [200, 100, 200]
         });
@@ -547,6 +565,18 @@ async function checkUser() {
                         state = cloudState;
                         saveState(false); // Save to local but DON'T push back to avoid loops
                         updateUI();
+                        
+                        // Visual Feedback for Sync
+                        const toast = document.createElement('div');
+                        toast.textContent = '☁️ Data synced from other device';
+                        toast.style.cssText = `
+                            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+                            background: rgba(0,0,0,0.8); color: white; padding: 10px 20px;
+                            border-radius: 20px; font-size: 0.9rem; z-index: 9999;
+                            animation: fadeUp 0.3s ease-out;
+                        `;
+                        document.body.appendChild(toast);
+                        setTimeout(() => toast.remove(), 3000);
                     }
                 }
             })
@@ -650,7 +680,7 @@ try {
     els.resetBtn.addEventListener('click', reset);
     els.restDayToggle.addEventListener('change', toggleRestDay);
     els.buyPackBtn.addEventListener('click', buyPack);
-    els.packPriceInput.addEventListener('input', updatePrice);
+    els.packPriceInput.addEventListener('change', updatePrice); // Changed from 'input' to 'change' for better sync
     els.savePrefsBtn.addEventListener('click', savePreferences);
     els.enableNotifyBtn.addEventListener('click', requestNotificationPermission);
     
