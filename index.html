@@ -40,6 +40,12 @@
                 <div id="streak-badge" class="streak-badge hidden">🔥 0 Day Streak</div>
                 <p id="timer-text">Ready</p>
                 <div id="countdown">00:00:00</div>
+                
+                <!-- Time Adjustments (Hidden by default, shown when waiting) -->
+                <div id="timer-controls" class="timer-controls hidden" style="margin-top: 10px; display: flex; gap: 10px; justify-content: center;">
+                    <button id="reduce-time-btn" class="btn-text" style="font-size: 0.8rem; padding: 4px 12px;">⏩ -15m</button>
+                    <button id="slip-up-btn" class="btn-text" style="font-size: 0.8rem; padding: 4px 12px; color: var(--error);">⚠️ I Slipped</button>
+                </div>
             </div>
 
             <!-- Main Action -->

@@ -8,6 +8,11 @@ const DEFAULT_SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmF
 
 const els = {
     smokeBtn: document.getElementById('smoke-btn'),
+    // Timer Controls
+    timerControls: document.getElementById('timer-controls'),
+    reduceTimeBtn: document.getElementById('reduce-time-btn'),
+    slipUpBtn: document.getElementById('slip-up-btn'),
+    // Stats
     count: document.getElementById('count'),
     remaining: document.getElementById('remaining'),
     timerText: document.getElementById('timer-text'),
