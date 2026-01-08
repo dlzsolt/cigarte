@@ -148,6 +148,31 @@
     <!-- TAB 4: SETTINGS (SYNC) -->
     <div id="tab-settings" class="tab-content">
         <section class="card">
+            <h2>⚙️ Preferences</h2>
+            <div class="input-group-stack">
+                <label>Pack Size (Default 20)</label>
+                <input type="number" id="pref-pack-size" placeholder="20">
+            </div>
+            
+            <h3>💼 Work Schedule</h3>
+            <div class="input-group-stack">
+                <label>Work Start Time</label>
+                <input type="time" id="work-start">
+            </div>
+            <div class="input-group-stack">
+                <label>Work End Time</label>
+                <input type="time" id="work-end">
+            </div>
+            <div class="input-group-stack">
+                <label>Break Time (Smoke Allowed)</label>
+                <input type="time" id="work-break">
+            </div>
+            <p style="font-size: 0.8rem; color: #666;">During break time, the 2-hour limit is relaxed.</p>
+            
+            <button id="save-prefs-btn" class="btn-primary" style="margin-top: 15px;">Save Preferences</button>
+        </section>
+
+        <section class="card">
             <h2>☁️ Cloud Sync</h2>
             <p style="font-size: 0.9rem; color: #666; margin-bottom: 15px;">
                 Sync your data across devices using Supabase.

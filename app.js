@@ -25,6 +25,12 @@ const els = {
     breatheBtn: document.getElementById('breathe-btn'),
     breatheModal: document.getElementById('breathe-modal'),
     breatheInstruction: document.getElementById('breathe-instruction'),
+    // Preferences
+    prefPackSize: document.getElementById('pref-pack-size'),
+    workStart: document.getElementById('work-start'),
+    workEnd: document.getElementById('work-end'),
+    workBreak: document.getElementById('work-break'),
+    savePrefsBtn: document.getElementById('save-prefs-btn'),
     // Sync UI
     sbUrl: document.getElementById('sb-url'),
     sbKey: document.getElementById('sb-key'),
@@ -49,7 +55,14 @@ let state = {
     isRestDay: false,
     cigsInPack: 20,
     packPrice: 0,
-    history: [] // { date: string, count: number }
+    history: [], // { date: string, count: number }
+    // New Preferences
+    packSize: 20,
+    workSchedule: {
+        start: '',
+        end: '',
+        break: ''
+    }
 };
 
 let supabase = null;
@@ -84,7 +97,9 @@ function loadState() {
                 isRestDay: false,
                 cigsInPack: parsed.cigsInPack !== undefined ? parsed.cigsInPack : 20,
                 packPrice: parsed.packPrice || 0,
-                history: history
+                history: history,
+                packSize: parsed.packSize || 20,
+                workSchedule: parsed.workSchedule || { start: '', end: '', break: '' }
             };
             saveState();
         } else {
@@ -93,6 +108,8 @@ function loadState() {
             if (!state.history) state.history = [];
             if (state.cigsInPack === undefined) state.cigsInPack = 20;
             if (state.packPrice === undefined) state.packPrice = 0;
+            if (state.packSize === undefined) state.packSize = 20;
+            if (!state.workSchedule) state.workSchedule = { start: '', end: '', break: '' };
         }
     }
 }
@@ -110,6 +127,12 @@ function updateUI() {
     els.packCount.textContent = state.cigsInPack;
     if(els.packCountDisplay) els.packCountDisplay.textContent = state.cigsInPack;
     
+    // Preferences Inputs
+    els.prefPackSize.value = state.packSize;
+    els.workStart.value = state.workSchedule.start;
+    els.workEnd.value = state.workSchedule.end;
+    els.workBreak.value = state.workSchedule.break;
+
     const maxAllowed = state.isRestDay ? 8 : 5;
     els.remaining.textContent = Math.max(0, maxAllowed - state.count);
 
@@ -119,12 +142,27 @@ function updateUI() {
 
     const now = Date.now();
     const nextAllowed = state.lastSmoked + SPACING_MS;
+    
+    // Check for Break Time Override
+    let isBreakTime = false;
+    if (state.workSchedule.break && !state.isRestDay) {
+        const breakDate = new Date();
+        const [bH, bM] = state.workSchedule.break.split(':');
+        breakDate.setHours(bH, bM, 0, 0);
+        
+        // Break window: +/- 15 mins from break time
+        const diffBreak = Math.abs(now - breakDate.getTime());
+        if (diffBreak < 15 * 60 * 1000) { // 15 min window
+            isBreakTime = true;
+        }
+    }
+
     const diff = nextAllowed - now;
 
-    if (diff <= 0) {
+    if (diff <= 0 || isBreakTime) {
         els.smokeBtn.disabled = false;
-        els.smokeBtn.textContent = '🚬 Smoke One';
-        els.timerText.textContent = 'You are allowed to smoke now.';
+        els.smokeBtn.textContent = isBreakTime ? '☕ Break Time (Allowed)' : '🚬 Smoke One';
+        els.timerText.textContent = isBreakTime ? 'Enjoy your break.' : 'You are allowed to smoke now.';
         els.countdown.textContent = '00:00:00';
         els.countdown.style.color = 'var(--primary)';
     } else {
@@ -145,7 +183,7 @@ function updateSavingsDisplay() {
     const costPerDayBaseline = price;
     const costPerDay2Days = price / 2;
     const costPerDay3Days = price / 3;
-    const costPerDayPlan = price / (20 / 5);
+    const costPerDayPlan = price / (state.packSize / 5); // Use custom pack size
 
     const monthlyBaseline = costPerDayBaseline * 30;
     const monthly2Days = costPerDay2Days * 30;
@@ -223,7 +261,20 @@ function formatTime(ms) {
 
 function smoke() {
     const now = Date.now();
-    if (now < state.lastSmoked + SPACING_MS) return;
+    
+    // Check break time
+    let isBreakTime = false;
+    if (state.workSchedule.break && !state.isRestDay) {
+        const breakDate = new Date();
+        const [bH, bM] = state.workSchedule.break.split(':');
+        breakDate.setHours(bH, bM, 0, 0);
+        const diffBreak = Math.abs(now - breakDate.getTime());
+        if (diffBreak < 15 * 60 * 1000) {
+            isBreakTime = true;
+        }
+    }
+
+    if (!isBreakTime && now < state.lastSmoked + SPACING_MS) return;
 
     if (state.cigsInPack <= 0) {
         if(!confirm('Pack is empty! Still smoke?')) return;
@@ -253,8 +304,8 @@ function toggleRestDay() {
 }
 
 function buyPack() {
-    if(confirm('Refill pack to 20 cigarettes?')) {
-        state.cigsInPack = 20;
+    if(confirm(`Refill pack to ${state.packSize} cigarettes?`)) {
+        state.cigsInPack = state.packSize;
         saveState();
         updateUI();
     }
@@ -264,6 +315,18 @@ function updatePrice() {
     state.packPrice = els.packPriceInput.value;
     saveState();
     updateUI();
+}
+
+function savePreferences() {
+    state.packSize = parseInt(els.prefPackSize.value) || 20;
+    state.workSchedule = {
+        start: els.workStart.value,
+        end: els.workEnd.value,
+        break: els.workBreak.value
+    };
+    saveState();
+    updateUI();
+    alert('Preferences saved!');
 }
 
 // --- BREATHING ---
@@ -443,6 +506,7 @@ els.restDayToggle.addEventListener('change', toggleRestDay);
 els.buyPackBtn.addEventListener('click', buyPack);
 els.packPriceInput.addEventListener('input', updatePrice);
 els.breatheBtn.addEventListener('click', openBreathe);
+els.savePrefsBtn.addEventListener('click', savePreferences);
 // Global scope for HTML click handler
 window.closeBreathe = closeBreathe;
 
