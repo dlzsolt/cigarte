@@ -46,7 +46,7 @@ const els = {
     userEmailDisplay: document.getElementById('user-email-display'),
     logoutBtn: document.getElementById('logout-btn'),
     forceSyncBtn: document.getElementById('force-sync-btn'),
-    testModeToggle: document.getElementById('test-mode-toggle')
+    testModeToggle: document.getElementById('test-mode-toggle'),
     // Audio
     notificationSound: document.getElementById('notification-sound')
 };
