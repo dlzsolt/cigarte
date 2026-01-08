@@ -46,10 +46,48 @@ const els = {
     userEmailDisplay: document.getElementById('user-email-display'),
     logoutBtn: document.getElementById('logout-btn'),
     forceSyncBtn: document.getElementById('force-sync-btn'),
-    testModeToggle: document.getElementById('test-mode-toggle'),
-    // Audio
-    notificationSound: document.getElementById('notification-sound')
+    testModeToggle: document.getElementById('test-mode-toggle')
+    // Audio (Removed HTML element ref, using AudioContext)
 };
+
+// --- AUDIO CONTEXT SETUP ---
+const AudioContext = window.AudioContext || window.webkitAudioContext;
+let audioCtx;
+let notificationBuffer;
+
+function initAudio() {
+    if (!audioCtx) {
+        audioCtx = new AudioContext();
+    }
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+    
+    // Load buffer if not loaded
+    if (!notificationBuffer) {
+        fetch('notification.mp3')
+            .then(response => response.arrayBuffer())
+            .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
+            .then(audioBuffer => {
+                notificationBuffer = audioBuffer;
+                console.log('Audio buffer loaded');
+            })
+            .catch(e => console.error('Audio load error:', e));
+    }
+}
+
+function playSound() {
+    if (!audioCtx || !notificationBuffer) {
+        initAudio(); // Try to init if missing
+        return; 
+    }
+    
+    // Create source
+    const source = audioCtx.createBufferSource();
+    source.buffer = notificationBuffer;
+    source.connect(audioCtx.destination);
+    source.start(0);
+}
 
 let state = {
     lastSmoked: 0,
@@ -387,11 +425,7 @@ function scheduleNotification() {
     }, currentSpacing);
 }
 
-function playSound() {
-    if (els.notificationSound) {
-        els.notificationSound.play().catch(e => console.log('Audio play failed (interaction needed first):', e));
-    }
-}
+// REMOVED old playSound function, using AudioContext version above
 
 function sendNotification() {
     // Always try to play sound first (in-app fallback)
@@ -591,35 +625,25 @@ try {
     
     if (els.testNotifyBtn) {
         els.testNotifyBtn.addEventListener('click', () => {
-            // Aggressive iOS Audio Unlock Strategy
-            if (els.notificationSound) {
-                // Force reload to ensure it's fresh
-                els.notificationSound.load();
-                els.notificationSound.muted = false;
-                els.notificationSound.volume = 1.0;
-                
-                // Play and instantly pause to bless the tag
-                const playPromise = els.notificationSound.play();
-                if (playPromise !== undefined) {
-                    playPromise.then(() => {
-                        els.notificationSound.pause();
-                        els.notificationSound.currentTime = 0;
-                        console.log('Audio unlocked successfully for iOS');
-                    }).catch(error => {
-                        console.error('Audio unlock failed:', error);
-                    });
-                }
+            // Unlock AudioContext on user interaction
+            initAudio();
+            
+            // Play a silent short sound to really force iOS to wake up the audio thread
+            if (audioCtx) {
+                const oscillator = audioCtx.createOscillator();
+                oscillator.type = 'sine';
+                oscillator.frequency.value = 440; // value in hertz
+                oscillator.connect(audioCtx.destination);
+                oscillator.start();
+                oscillator.stop(audioCtx.currentTime + 0.001); // Stop almost immediately
             }
 
             if (Notification.permission === 'granted') {
                 alert('Wait 15 seconds... Lock your phone now to test!');
                 
                 setTimeout(() => {
-                    // Play sound with explicit volume set again
-                    if (els.notificationSound) {
-                        els.notificationSound.volume = 1.0;
-                        els.notificationSound.play().catch(e => console.error('Delayed play failed:', e));
-                    }
+                    // Play sound
+                    playSound();
                     
                     new Notification('Smoke Less', {
                         body: '🔔 This is your delayed test notification!',
