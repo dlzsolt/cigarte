@@ -7,13 +7,15 @@ const els = {
     remaining: document.getElementById('remaining'),
     timerText: document.getElementById('timer-text'),
     countdown: document.getElementById('countdown'),
-    resetBtn: document.getElementById('reset-btn')
+    resetBtn: document.getElementById('reset-btn'),
+    restDayToggle: document.getElementById('rest-day-toggle')
 };
 
 let state = {
     lastSmoked: 0,
     count: 0,
-    date: new Date().toDateString()
+    date: new Date().toDateString(),
+    isRestDay: false
 };
 
 function loadState() {
@@ -25,11 +27,12 @@ function loadState() {
             state = {
                 lastSmoked: parsed.lastSmoked, // Keep last smoked time for spacing
                 count: 0,
-                date: new Date().toDateString()
+                date: new Date().toDateString(),
+                isRestDay: false // Default to work day
             };
             saveState();
         } else {
-            state = parsed;
+            state = { ...state, ...parsed }; // Merge to ensure new fields exist
         }
     }
 }
@@ -39,9 +42,16 @@ function saveState() {
 }
 
 function updateUI() {
+    // Update Rest Day Toggle
+    els.restDayToggle.checked = state.isRestDay;
+
     els.count.textContent = state.count;
-    // Assuming 5 is the target limit
-    els.remaining.textContent = Math.max(0, 5 - state.count);
+    
+    // Work Day (9-10h free) = ~5 cigs
+    // Rest Day (15h free) = ~8 cigs
+    const maxAllowed = state.isRestDay ? 8 : 5;
+    
+    els.remaining.textContent = Math.max(0, maxAllowed - state.count);
 
     const now = Date.now();
     const nextAllowed = state.lastSmoked + SPACING_MS;
@@ -91,6 +101,12 @@ function reset() {
     }
 }
 
+function toggleRestDay() {
+    state.isRestDay = els.restDayToggle.checked;
+    saveState();
+    updateUI();
+}
+
 // Init
 loadState();
 updateUI();
@@ -98,3 +114,4 @@ setInterval(updateUI, 1000); // Update timer every second
 
 els.smokeBtn.addEventListener('click', smoke);
 els.resetBtn.addEventListener('click', reset);
+els.restDayToggle.addEventListener('change', toggleRestDay);
