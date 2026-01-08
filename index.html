@@ -126,6 +126,14 @@
         </button>
     </nav>
 
+    <!-- Update Notification -->
+    <div id="update-toast" class="update-toast hidden">
+        <div class="toast-content">
+            <span>New version available!</span>
+            <button id="update-btn" class="btn-update">Update</button>
+        </div>
+    </div>
+
     <script src="app.js"></script>
     <script>
         // Simple tab switching logic inline or in app.js
@@ -145,13 +153,39 @@
             window.scrollTo(0,0);
         }
 
+        let newWorker;
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./service-worker.js')
-                    .then(reg => console.log('SW registered'))
-                    .catch(err => console.error('SW failed', err));
+                navigator.serviceWorker.register('./service-worker.js').then(reg => {
+                    console.log('SW registered');
+
+                    reg.addEventListener('updatefound', () => {
+                        newWorker = reg.installing;
+                        newWorker.addEventListener('statechange', () => {
+                            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                // New update available
+                                document.getElementById('update-toast').classList.remove('hidden');
+                            }
+                        });
+                    });
+                }).catch(err => console.error('SW failed', err));
+            });
+
+            let refreshing;
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                if (refreshing) return;
+                window.location.reload();
+                refreshing = true;
             });
         }
+
+        document.getElementById('update-btn').addEventListener('click', () => {
+            if (newWorker) {
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+            }
+            document.getElementById('update-toast').classList.add('hidden');
+        });
     </script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'smokeless-v1';
+const CACHE_NAME = 'smokeless-v2';
 const ASSETS = [
   './',
   './index.html',
@@ -14,10 +14,28 @@ self.addEventListener('install', (e) => {
   );
 });
 
+self.addEventListener('activate', (e) => {
+  e.waitUntil(
+    caches.keys().then((keyList) => {
+      return Promise.all(keyList.map((key) => {
+        if (key !== CACHE_NAME) {
+          return caches.delete(key);
+        }
+      }));
+    })
+  );
+});
+
 self.addEventListener('fetch', (e) => {
   e.respondWith(
     caches.match(e.request).then((response) => {
       return response || fetch(e.request);
     })
   );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
