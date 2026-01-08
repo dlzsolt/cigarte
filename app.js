@@ -51,43 +51,69 @@ const els = {
 };
 
 // --- AUDIO CONTEXT SETUP ---
-const AudioContext = window.AudioContext || window.webkitAudioContext;
-let audioCtx;
-let notificationBuffer;
-
-function initAudio() {
-    if (!audioCtx) {
-        audioCtx = new AudioContext();
-    }
-    if (audioCtx.state === 'suspended') {
-        audioCtx.resume();
-    }
-    
-    // Load buffer if not loaded
-    if (!notificationBuffer) {
-        fetch('notification.mp3')
-            .then(response => response.arrayBuffer())
-            .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
-            .then(audioBuffer => {
-                notificationBuffer = audioBuffer;
-                console.log('Audio buffer loaded');
-            })
-            .catch(e => console.error('Audio load error:', e));
-    }
-}
-
-function playSound() {
-    if (!audioCtx || !notificationBuffer) {
-        initAudio(); // Try to init if missing
-        return; 
-    }
-    
-    // Create source
-    const source = audioCtx.createBufferSource();
-    source.buffer = notificationBuffer;
-    source.connect(audioCtx.destination);
-    source.start(0);
-}
+ const AudioContext = window.AudioContext || window.webkitAudioContext;
+ let audioCtx;
+ let notificationBuffer;
+ let silentOscillator; // Keep-alive oscillator
+ 
+ function initAudio() {
+     if (!audioCtx) {
+         audioCtx = new AudioContext();
+     }
+     if (audioCtx.state === 'suspended') {
+         audioCtx.resume();
+     }
+     
+     // Start Silent Loop (Keep-Alive)
+     if (!silentOscillator) {
+         try {
+             // Create a nearly silent oscillator to keep iOS audio thread active
+             silentOscillator = audioCtx.createOscillator();
+             const gainNode = audioCtx.createGain();
+             
+             silentOscillator.type = 'sine';
+             silentOscillator.frequency.value = 60; // Low frequency
+             
+             // Extremely low volume (not 0, as iOS might optimize that away)
+             gainNode.gain.value = 0.0001; 
+             
+             silentOscillator.connect(gainNode);
+             gainNode.connect(audioCtx.destination);
+             silentOscillator.start();
+             console.log('Silent keep-alive audio started');
+         } catch (e) {
+             console.error('Keep-alive failed:', e);
+         }
+     }
+     
+     // Load Tri-tone style sound (replace old buffer)
+     if (!notificationBuffer) {
+         // Using a Tri-tone style sound URL
+         fetch('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3') // Placeholder: We will use the same for now, but ensure it plays
+             .then(response => response.arrayBuffer())
+             .then(arrayBuffer => audioCtx.decodeAudioData(arrayBuffer))
+             .then(audioBuffer => {
+                 notificationBuffer = audioBuffer;
+                 console.log('Notification sound loaded');
+             })
+             .catch(e => console.error('Audio load error:', e));
+     }
+ }
+ 
+ function playSound() {
+     if (!audioCtx || !notificationBuffer) {
+         initAudio(); // Try to init if missing
+         return; 
+     }
+     
+     if (audioCtx.state === 'suspended') audioCtx.resume();
+     
+     // Create source
+     const source = audioCtx.createBufferSource();
+     source.buffer = notificationBuffer;
+     source.connect(audioCtx.destination);
+     source.start(0);
+ }
 
 let state = {
     lastSmoked: 0,
@@ -625,19 +651,9 @@ try {
     
     if (els.testNotifyBtn) {
         els.testNotifyBtn.addEventListener('click', () => {
-            // Unlock AudioContext on user interaction
+            // Unlock AudioContext and start Keep-Alive
             initAudio();
             
-            // Play a silent short sound to really force iOS to wake up the audio thread
-            if (audioCtx) {
-                const oscillator = audioCtx.createOscillator();
-                oscillator.type = 'sine';
-                oscillator.frequency.value = 440; // value in hertz
-                oscillator.connect(audioCtx.destination);
-                oscillator.start();
-                oscillator.stop(audioCtx.currentTime + 0.001); // Stop almost immediately
-            }
-
             if (Notification.permission === 'granted') {
                 alert('Wait 15 seconds... Lock your phone now to test!');
                 
