@@ -69,7 +69,7 @@ let state = {
     }
 };
 
-let supabase = null;
+let supabaseClient = null;
 let currentUser = null;
 let notificationScheduled = false;
 let isTestMode = false;
@@ -443,8 +443,12 @@ function initSupabase() {
     
     if (url && key) {
         try {
+            if (typeof window.supabase === 'undefined') {
+                console.warn('Supabase SDK not loaded (offline or blocked). Sync disabled.');
+                return;
+            }
             // @ts-ignore
-            supabase = window.supabase.createClient(url, key);
+            supabaseClient = window.supabase.createClient(url, key);
             els.syncSetupForm.classList.add('hidden');
             els.syncAuthForm.classList.remove('hidden');
             checkUser();
@@ -599,6 +603,21 @@ try {
         els.testModeToggle.addEventListener('change', () => {
             isTestMode = els.testModeToggle.checked;
             updateUI();
+        });
+    }
+
+    // Close Breathe Modal Listeners
+    const closeX = document.getElementById('close-breathe-x');
+    const closeBtn = document.getElementById('close-breathe-btn');
+    if (closeX) closeX.addEventListener('click', closeBreathe);
+    if (closeBtn) closeBtn.addEventListener('click', closeBreathe);
+    
+    // Close on clicking outside
+    if (els.breatheModal) {
+        els.breatheModal.addEventListener('click', (e) => {
+            if (e.target === els.breatheModal) {
+                closeBreathe();
+            }
         });
     }
 
