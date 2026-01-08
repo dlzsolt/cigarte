@@ -48,7 +48,8 @@ const els = {
     userInfo: document.getElementById('user-info'),
     userEmailDisplay: document.getElementById('user-email-display'),
     logoutBtn: document.getElementById('logout-btn'),
-    forceSyncBtn: document.getElementById('force-sync-btn')
+    forceSyncBtn: document.getElementById('force-sync-btn'),
+    testModeToggle: document.getElementById('test-mode-toggle')
 };
 
 let state = {
@@ -71,6 +72,7 @@ let state = {
 let supabase = null;
 let currentUser = null;
 let notificationScheduled = false;
+let isTestMode = false;
 
 // --- STATE MANAGEMENT ---
 
@@ -145,7 +147,8 @@ function updateUI() {
     renderChart();
 
     const now = Date.now();
-    const nextAllowed = state.lastSmoked + SPACING_MS;
+    const currentSpacing = isTestMode ? 10000 : SPACING_MS; // 10 seconds in test mode
+    const nextAllowed = state.lastSmoked + currentSpacing;
     
     // Check for Break Time Override
     let isBreakTime = false;
@@ -531,35 +534,46 @@ async function handleLogout() {
 }
 
 async function syncData() {
+    // Robust offline check
+    if (!navigator.onLine) return;
     if (!supabase || !currentUser) return;
     
-    // Upsert state to 'profiles' table
-    // Assumes table 'profiles' exists with columns: id (uuid, pk), data (jsonb), updated_at (timestamptz)
-    const { error } = await supabase
-        .from('profiles')
-        .upsert({ 
-            id: currentUser.id, 
-            data: state, 
-            updated_at: new Date().toISOString() 
-        });
+    try {
+        // Upsert state to 'profiles' table
+        // Assumes table 'profiles' exists with columns: id (uuid, pk), data (jsonb), updated_at (timestamptz)
+        const { error } = await supabase
+            .from('profiles')
+            .upsert({ 
+                id: currentUser.id, 
+                data: state, 
+                updated_at: new Date().toISOString() 
+            });
 
-    if (error) console.error('Sync error:', error);
+        if (error) console.error('Sync error:', error);
+    } catch (e) {
+        console.warn('Sync failed (likely network issue):', e);
+    }
 }
 
 async function pullData() {
+    if (!navigator.onLine) return;
     if (!supabase || !currentUser) return;
     
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('data')
-        .eq('id', currentUser.id)
-        .single();
+    try {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('data')
+            .eq('id', currentUser.id)
+            .single();
 
-    if (data && data.data) {
-        console.log('Pulled cloud data:', data.data);
-        state = { ...state, ...data.data };
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); // Save locally without triggering sync loop? 
-        updateUI();
+        if (data && data.data) {
+            console.log('Pulled cloud data:', data.data);
+            state = { ...state, ...data.data };
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); 
+            updateUI();
+        }
+    } catch (e) {
+        console.warn('Pull failed (likely network issue):', e);
     }
 }
 
@@ -579,6 +593,15 @@ try {
     els.breatheBtn.addEventListener('click', openBreathe);
     els.savePrefsBtn.addEventListener('click', savePreferences);
     els.enableNotifyBtn.addEventListener('click', requestNotificationPermission);
+    
+    // Test Mode Toggle
+    if (els.testModeToggle) {
+        els.testModeToggle.addEventListener('change', () => {
+            isTestMode = els.testModeToggle.checked;
+            updateUI();
+        });
+    }
+
     // Global scope for HTML click handler
     window.closeBreathe = closeBreathe;
 
