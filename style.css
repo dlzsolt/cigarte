@@ -462,16 +462,66 @@ button {
     box-shadow: 0 4px 10px rgba(255, 61, 0, 0.3);
 }
 
-/* Inputs */
+/* Compact Cards */
+.compact-card {
+    padding: 16px 20px;
+    margin-bottom: 12px;
+}
+
+.compact-card h2 {
+    font-size: 1rem;
+    margin-bottom: 12px;
+}
+
+/* Smaller Buttons */
+.btn-primary {
+    height: 48px; /* Reduced from 56 */
+    font-size: 1rem;
+}
+
+.btn-secondary {
+    height: 40px; /* Reduced from 48 */
+    font-size: 0.9rem;
+}
+
+.btn-sos {
+    padding: 8px 16px;
+    font-size: 0.9rem;
+}
+
+/* Modern Inputs */
 input[type="number"], input[type="text"], input[type="password"], input[type="email"], input[type="time"] {
     width: 100%;
-    padding: 16px;
+    padding: 12px 16px; /* Reduced padding */
     background: rgba(128,128,128,0.05);
     border: 1px solid transparent;
-    border-radius: 16px;
+    border-radius: 12px;
     color: var(--on-background);
-    font-size: 1rem;
+    font-size: 0.95rem;
     transition: all 0.2s;
+}
+
+/* Stats Grid Tweak */
+.stats-grid {
+    gap: 8px;
+}
+
+.stat-card {
+    padding: 12px 4px;
+}
+
+.stat-value {
+    font-size: 1.2rem;
+}
+
+.tab-content {
+    /* Ensure hidden by default */
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+    animation: fadeIn 0.3s ease-out;
 }
 input:focus {
     outline: none;

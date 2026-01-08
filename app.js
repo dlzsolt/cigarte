@@ -923,6 +923,13 @@ async function pullData() {
 // --- INIT ---
 
 try {
+    // Force correct tab state on load
+    document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+    document.getElementById('tab-track').classList.add('active');
+    
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    document.querySelector('.nav-item').classList.add('active'); // First item
+
     loadState();
     updateUI();
     setInterval(updateUI, 1000);
