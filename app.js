@@ -197,12 +197,21 @@ function updatePrice() {
 // --- SUPABASE SYNC ---
 
 function initSupabase() {
+    let url = DEFAULT_SB_URL;
+    let key = DEFAULT_SB_KEY;
+
+    // Override with local config if exists
     const config = localStorage.getItem(SUPABASE_CONFIG_KEY);
     if (config) {
-        const { url, key } = JSON.parse(config);
-        els.sbUrl.value = url;
-        els.sbKey.value = key;
-        
+        const parsed = JSON.parse(config);
+        url = parsed.url || url;
+        key = parsed.key || key;
+    }
+
+    els.sbUrl.value = url;
+    els.sbKey.value = key;
+    
+    if (url && key) {
         try {
             // @ts-ignore
             supabase = window.supabase.createClient(url, key);
@@ -211,8 +220,7 @@ function initSupabase() {
             checkUser();
         } catch (e) {
             console.error('Supabase init failed', e);
-            alert('Invalid configuration. Please check your URL and Key.');
-            localStorage.removeItem(SUPABASE_CONFIG_KEY);
+            // Don't alert immediately on auto-init to avoid annoyance if defaults are wrong
         }
     }
 }
