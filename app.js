@@ -447,14 +447,14 @@ function saveSupabaseConfig() {
 }
 
 async function checkUser() {
-    if (!supabase) return;
-    const { data: { user } } = await supabase.auth.getUser();
+    if (!supabaseClient) return;
+    const { data: { user } } = await supabaseClient.auth.getUser();
     currentUser = user;
     updateAuthUI();
     if (user) {
         pullData(); // Fetch cloud data on login
         // Subscribe to changes
-        supabase
+        supabaseClient
             .channel('public:profiles')
             .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, 
             (payload) => {
@@ -487,9 +487,9 @@ function updateAuthUI() {
 async function handleLogin() {
     const email = els.authEmail.value;
     const password = els.authPassword.value;
-    if (!supabase || !email || !password) return;
+    if (!supabaseClient || !email || !password) return;
 
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
     if (error) alert(error.message);
     else checkUser();
 }
@@ -497,9 +497,9 @@ async function handleLogin() {
 async function handleSignup() {
     const email = els.authEmail.value;
     const password = els.authPassword.value;
-    if (!supabase || !email || !password) return;
+    if (!supabaseClient || !email || !password) return;
 
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabaseClient.auth.signUp({ email, password });
     if (error) alert(error.message);
     else {
         alert('Check your email for the confirmation link!');
@@ -507,8 +507,8 @@ async function handleSignup() {
 }
 
 async function handleLogout() {
-    if (!supabase) return;
-    await supabase.auth.signOut();
+    if (!supabaseClient) return;
+    await supabaseClient.auth.signOut();
     currentUser = null;
     updateAuthUI();
 }
@@ -516,12 +516,12 @@ async function handleLogout() {
 async function syncData() {
     // Robust offline check
     if (!navigator.onLine) return;
-    if (!supabase || !currentUser) return;
+    if (!supabaseClient || !currentUser) return;
     
     try {
         // Upsert state to 'profiles' table
         // Assumes table 'profiles' exists with columns: id (uuid, pk), data (jsonb), updated_at (timestamptz)
-        const { error } = await supabase
+        const { error } = await supabaseClient
             .from('profiles')
             .upsert({ 
                 id: currentUser.id, 
@@ -537,10 +537,10 @@ async function syncData() {
 
 async function pullData() {
     if (!navigator.onLine) return;
-    if (!supabase || !currentUser) return;
+    if (!supabaseClient || !currentUser) return;
     
     try {
-        const { data, error } = await supabase
+        const { data, error } = await supabaseClient
             .from('profiles')
             .select('data')
             .eq('id', currentUser.id)
