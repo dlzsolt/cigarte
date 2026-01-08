@@ -47,6 +47,8 @@ const els = {
     logoutBtn: document.getElementById('logout-btn'),
     forceSyncBtn: document.getElementById('force-sync-btn'),
     testModeToggle: document.getElementById('test-mode-toggle')
+    // Audio
+    notificationSound: document.getElementById('notification-sound')
 };
 
 let state = {
@@ -385,7 +387,16 @@ function scheduleNotification() {
     }, currentSpacing);
 }
 
+function playSound() {
+    if (els.notificationSound) {
+        els.notificationSound.play().catch(e => console.log('Audio play failed (interaction needed first):', e));
+    }
+}
+
 function sendNotification() {
+    // Always try to play sound first (in-app fallback)
+    playSound();
+
     if (Notification.permission === 'granted') {
         // Check if we already sent one recently to avoid spam?
         // Actually, just send it.
@@ -398,6 +409,10 @@ function sendNotification() {
             window.focus();
             notif.close();
         };
+    } else {
+        // Fallback alert for iOS if notifications blocked/unsupported but app is open
+        // Use a gentle toast or title change instead of blocking alert
+        document.title = "✅ SMOKE NOW - Smoke Less";
     }
 }
 
@@ -576,6 +591,9 @@ try {
     
     if (els.testNotifyBtn) {
         els.testNotifyBtn.addEventListener('click', () => {
+            // Play sound immediately to test
+            playSound();
+            
             if (Notification.permission === 'granted') {
                 new Notification('Smoke Less', {
                     body: '🔔 This is a test notification! It works.',
@@ -583,7 +601,7 @@ try {
                     vibrate: [200, 100, 200]
                 });
             } else {
-                alert('Please enable notifications first.');
+                alert('Notification permission not granted. Playing sound only.');
                 requestNotificationPermission();
             }
         });
