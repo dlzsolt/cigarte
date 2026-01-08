@@ -367,8 +367,10 @@ function requestNotificationPermission() {
 function scheduleNotification() {
     if (Notification.permission !== 'granted') return;
     
-    // Calculate 2 hours from now
-    const nextTime = Date.now() + SPACING_MS;
+    const currentSpacing = isTestMode ? 10000 : SPACING_MS;
+    
+    // Calculate next time
+    const nextTime = Date.now() + currentSpacing;
     const timeString = new Date(nextTime).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     
     // Note: Reliable background scheduling on web is hard without Push API + Server.
@@ -379,7 +381,7 @@ function scheduleNotification() {
     
     setTimeout(() => {
         sendNotification();
-    }, SPACING_MS);
+    }, currentSpacing);
 }
 
 function sendNotification() {
