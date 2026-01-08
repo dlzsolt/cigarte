@@ -591,22 +591,35 @@ try {
     
     if (els.testNotifyBtn) {
         els.testNotifyBtn.addEventListener('click', () => {
-            // Unlock audio immediately on click
+            // Aggressive iOS Audio Unlock Strategy
             if (els.notificationSound) {
-                els.notificationSound.volume = 0; // Mute initially
-                els.notificationSound.play().then(() => {
-                    els.notificationSound.pause();
-                    els.notificationSound.currentTime = 0;
-                    els.notificationSound.volume = 1; // Unmute for later
-                }).catch(e => console.log('Audio unlock failed:', e));
+                // Force reload to ensure it's fresh
+                els.notificationSound.load();
+                els.notificationSound.muted = false;
+                els.notificationSound.volume = 1.0;
+                
+                // Play and instantly pause to bless the tag
+                const playPromise = els.notificationSound.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        els.notificationSound.pause();
+                        els.notificationSound.currentTime = 0;
+                        console.log('Audio unlocked successfully for iOS');
+                    }).catch(error => {
+                        console.error('Audio unlock failed:', error);
+                    });
+                }
             }
 
             if (Notification.permission === 'granted') {
                 alert('Wait 15 seconds... Lock your phone now to test!');
                 
                 setTimeout(() => {
-                    // Play sound
-                    playSound();
+                    // Play sound with explicit volume set again
+                    if (els.notificationSound) {
+                        els.notificationSound.volume = 1.0;
+                        els.notificationSound.play().catch(e => console.error('Delayed play failed:', e));
+                    }
                     
                     new Notification('Smoke Less', {
                         body: '🔔 This is your delayed test notification!',
