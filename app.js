@@ -591,15 +591,20 @@ try {
     
     if (els.testNotifyBtn) {
         els.testNotifyBtn.addEventListener('click', () => {
-            // Play sound immediately to test
-            playSound();
-            
             if (Notification.permission === 'granted') {
-                new Notification('Smoke Less', {
-                    body: '🔔 This is a test notification! It works.',
-                    icon: 'icon.svg',
-                    vibrate: [200, 100, 200]
-                });
+                alert('Wait 15 seconds... Lock your phone now to test!');
+                
+                setTimeout(() => {
+                    // Play sound
+                    playSound();
+                    
+                    new Notification('Smoke Less', {
+                        body: '🔔 This is your delayed test notification!',
+                        icon: 'icon.svg',
+                        vibrate: [200, 100, 200]
+                    });
+                }, 15000); // 15 seconds delay
+                
             } else {
                 alert('Notification permission not granted. Playing sound only.');
                 requestNotificationPermission();
