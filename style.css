@@ -427,11 +427,11 @@ input:focus {
     height: var(--nav-height);
     background: var(--md-sys-color-surface-container); 
     display: flex;
-    justify-content: space-around;
+    justify-content: space-evenly; /* Better spacing for icons only */
     align-items: center;
-    padding: 0 12px; 
-    z-index: 1000; /* Increased z-index to stay on top */
-    box-shadow: 0 -2px 10px rgba(0,0,0,0.05); /* Added subtle shadow */
+    padding: 0 16px; 
+    z-index: 1000;
+    box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
 }
 
 .nav-item {
@@ -442,12 +442,10 @@ input:focus {
     align-items: center;
     justify-content: center;
     color: var(--md-sys-color-on-surface-variant);
-    font-size: 0.75rem;
-    font-weight: 500;
-    width: 100%;
+    width: 64px; /* Fixed width for touch target */
     height: 100%;
-    gap: 4px;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
 }
 
 .nav-indicator {
@@ -457,20 +455,16 @@ input:focus {
     width: 64px;
     height: 32px;
     border-radius: 16px; /* Pill shape */
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, transform 0.2s ease;
 }
 
 .nav-item.active .nav-indicator {
     background-color: var(--md-sys-color-secondary-container);
+    transform: scale(1.1); /* Slight pop */
 }
 
 .nav-item.active .material-symbols-rounded {
     color: var(--md-sys-color-on-secondary-container);
-}
-
-.nav-item.active .nav-label {
-    color: var(--md-sys-color-on-surface);
-    font-weight: 600;
 }
 
 /* Modals & Toasts */
