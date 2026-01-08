@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smoke Less – Spacing Plan</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" href="icon.svg" type="image/svg+xml">
+    <meta name="theme-color" content="#4CAF50">
+    <meta name="description" content="A simple plan to reduce smoking by spacing cigarettes.">
+</head>
+<body>
+    <header>
+        <h1>Smoke Less</h1>
+        <p class="subtitle">Spacing Plan</p>
+    </header>
+
+    <main>
+        <section class="card routine">
+            <h2>Daily Routine</h2>
+            <ul>
+                <li><strong>Wake up:</strong> 07:00</li>
+                <li><strong>Work:</strong> 5–6 hours</li>
+                <li><strong>Free time:</strong> 9–10 hours</li>
+                <li><strong>Sleep:</strong> 22:00</li>
+            </ul>
+        </section>
+
+        <section class="card plan">
+            <h2>The Plan</h2>
+            <div class="rule">
+                <h3>🚫 Stop Chain Smoking</h3>
+                <p>No two cigarettes within 30 mins.</p>
+            </div>
+            <div class="rule">
+                <h3>⏳ Spacing</h3>
+                <p>1 cigarette every 2 hours during free time.</p>
+            </div>
+            <div class="summary">
+                <p>Free time: <strong>9–10h</strong> → <strong>4–5 cigs/day</strong></p>
+                <p>Pack (20) → <strong>15–16 left</strong></p>
+            </div>
+        </section>
+
+        <section class="card tracker">
+            <h2>Tracker</h2>
+            <div id="status-display">
+                <p id="timer-text">Ready</p>
+                <div id="countdown">00:00:00</div>
+            </div>
+            <button id="smoke-btn" class="btn-primary">🚬 Smoke One</button>
+            <p class="stats">Smoked today: <span id="count">0</span></p>
+            <p class="stats">Remaining allowed (approx): <span id="remaining">5</span></p>
+        </section>
+        
+        <button id="reset-btn" class="btn-text">Reset Day</button>
+    </main>
+
+    <footer>
+        <p>Stay strong. You got this.</p>
+    </footer>
+
+    <script src="app.js"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./service-worker.js')
+                    .then(reg => console.log('SW registered'))
+                    .catch(err => console.error('SW failed', err));
+            });
+        }
+    </script>
+</body>
+</html>
