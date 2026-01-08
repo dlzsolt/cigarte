@@ -1,4 +1,5 @@
 const STORAGE_KEY = 'smokeless_data';
+const SUPABASE_CONFIG_KEY = 'smokeless_supabase_config';
 const SPACING_MS = 2 * 60 * 60 * 1000; // 2 hours in ms
 
 const els = {
@@ -10,9 +11,25 @@ const els = {
     resetBtn: document.getElementById('reset-btn'),
     restDayToggle: document.getElementById('rest-day-toggle'),
     packCount: document.getElementById('pack-count'),
+    packCountDisplay: document.getElementById('pack-count-display'),
     buyPackBtn: document.getElementById('buy-pack-btn'),
     packPriceInput: document.getElementById('pack-price'),
-    savingsDisplay: document.getElementById('savings-display')
+    savingsDisplay: document.getElementById('savings-display'),
+    // Sync UI
+    sbUrl: document.getElementById('sb-url'),
+    sbKey: document.getElementById('sb-key'),
+    saveConfigBtn: document.getElementById('save-config-btn'),
+    syncSetupForm: document.getElementById('sync-setup-form'),
+    syncAuthForm: document.getElementById('sync-auth-form'),
+    authEmail: document.getElementById('auth-email'),
+    authPassword: document.getElementById('auth-password'),
+    loginBtn: document.getElementById('login-btn'),
+    signupBtn: document.getElementById('signup-btn'),
+    authInputs: document.getElementById('auth-inputs'),
+    userInfo: document.getElementById('user-info'),
+    userEmailDisplay: document.getElementById('user-email-display'),
+    logoutBtn: document.getElementById('logout-btn'),
+    forceSyncBtn: document.getElementById('force-sync-btn')
 };
 
 let state = {
@@ -24,23 +41,27 @@ let state = {
     packPrice: 0
 };
 
+let supabase = null;
+let currentUser = null;
+
+// --- STATE MANAGEMENT ---
+
 function loadState() {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
         const parsed = JSON.parse(stored);
-        // Reset count if new day
         if (parsed.date !== new Date().toDateString()) {
             state = {
-                lastSmoked: parsed.lastSmoked, // Keep last smoked time for spacing
+                lastSmoked: parsed.lastSmoked,
                 count: 0,
                 date: new Date().toDateString(),
-                isRestDay: false, // Default to work day
+                isRestDay: false,
                 cigsInPack: parsed.cigsInPack !== undefined ? parsed.cigsInPack : 20,
                 packPrice: parsed.packPrice || 0
             };
             saveState();
         } else {
-            state = { ...state, ...parsed }; // Merge to ensure new fields exist
+            state = { ...state, ...parsed };
             if (state.cigsInPack === undefined) state.cigsInPack = 20;
             if (state.packPrice === undefined) state.packPrice = 0;
         }
@@ -49,23 +70,20 @@ function loadState() {
 
 function saveState() {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    syncData(); // Trigger cloud sync if connected
 }
 
-function updateUI() {
-    // Update Rest Day Toggle
-    els.restDayToggle.checked = state.isRestDay;
+// --- UI UPDATES ---
 
+function updateUI() {
+    els.restDayToggle.checked = state.isRestDay;
     els.count.textContent = state.count;
     els.packCount.textContent = state.cigsInPack;
     if(els.packCountDisplay) els.packCountDisplay.textContent = state.cigsInPack;
     
-    // Work Day (9-10h free) = ~5 cigs
-    // Rest Day (15h free) = ~8 cigs
     const maxAllowed = state.isRestDay ? 8 : 5;
-    
     els.remaining.textContent = Math.max(0, maxAllowed - state.count);
 
-    // Update Price Input
     els.packPriceInput.value = state.packPrice || '';
     updateSavingsDisplay();
 
@@ -94,16 +112,10 @@ function updateSavingsDisplay() {
         els.savingsDisplay.innerHTML = '<p>Enter price to see savings.</p>';
         return;
     }
-
-    // Assumptions:
-    // Heavy smoker baseline: 20 cigs/day (1 pack)
-    // Current plan: 5 cigs/day (work) or 8 cigs/day (rest). Avg ~6/day.
-    // 6 cigs/day = 1 pack every ~3.3 days.
-    
-    const costPerDayBaseline = price; // 1 pack/day
+    const costPerDayBaseline = price;
     const costPerDay2Days = price / 2;
     const costPerDay3Days = price / 3;
-    const costPerDayPlan = price / (20 / 5); // 1 pack every 4 days (using work day limit)
+    const costPerDayPlan = price / (20 / 5);
 
     const monthlyBaseline = costPerDayBaseline * 30;
     const monthly2Days = costPerDay2Days * 30;
@@ -135,19 +147,20 @@ function formatTime(ms) {
     return `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
 }
 
+// --- ACTIONS ---
+
 function smoke() {
     const now = Date.now();
-    // Double check constraints
     if (now < state.lastSmoked + SPACING_MS) return;
 
     if (state.cigsInPack <= 0) {
-        if(!confirm('Pack is empty! Still smoke? (Will count as negative/borrowed)')) return;
+        if(!confirm('Pack is empty! Still smoke?')) return;
     }
 
     state.count++;
     state.cigsInPack--;
     state.lastSmoked = now;
-    state.date = new Date().toDateString(); // Ensure date is today
+    state.date = new Date().toDateString();
     saveState();
     updateUI();
 }
@@ -181,13 +194,156 @@ function updatePrice() {
     updateUI();
 }
 
-// Init
+// --- SUPABASE SYNC ---
+
+function initSupabase() {
+    const config = localStorage.getItem(SUPABASE_CONFIG_KEY);
+    if (config) {
+        const { url, key } = JSON.parse(config);
+        els.sbUrl.value = url;
+        els.sbKey.value = key;
+        
+        try {
+            // @ts-ignore
+            supabase = window.supabase.createClient(url, key);
+            els.syncSetupForm.classList.add('hidden');
+            els.syncAuthForm.classList.remove('hidden');
+            checkUser();
+        } catch (e) {
+            console.error('Supabase init failed', e);
+            alert('Invalid configuration. Please check your URL and Key.');
+            localStorage.removeItem(SUPABASE_CONFIG_KEY);
+        }
+    }
+}
+
+function saveSupabaseConfig() {
+    const url = els.sbUrl.value.trim();
+    const key = els.sbKey.value.trim();
+    if (url && key) {
+        localStorage.setItem(SUPABASE_CONFIG_KEY, JSON.stringify({ url, key }));
+        initSupabase();
+    } else {
+        alert('Please enter both URL and Key.');
+    }
+}
+
+async function checkUser() {
+    if (!supabase) return;
+    const { data: { user } } = await supabase.auth.getUser();
+    currentUser = user;
+    updateAuthUI();
+    if (user) {
+        pullData(); // Fetch cloud data on login
+        // Subscribe to changes
+        supabase
+            .channel('public:profiles')
+            .on('postgres_changes', { event: 'UPDATE', schema: 'public', table: 'profiles', filter: `id=eq.${user.id}` }, 
+            (payload) => {
+                console.log('Remote update received!', payload);
+                if (payload.new && payload.new.data) {
+                    const cloudState = payload.new.data;
+                    // Only update if cloud state is different/newer (simple check)
+                    if (JSON.stringify(cloudState) !== JSON.stringify(state)) {
+                        state = cloudState;
+                        saveState(); // Will trigger syncData but that's fine, it handles loops ideally or we can suppress
+                        updateUI();
+                    }
+                }
+            })
+            .subscribe();
+    }
+}
+
+function updateAuthUI() {
+    if (currentUser) {
+        els.authInputs.classList.add('hidden');
+        els.userInfo.classList.remove('hidden');
+        els.userEmailDisplay.textContent = currentUser.email;
+    } else {
+        els.authInputs.classList.remove('hidden');
+        els.userInfo.classList.add('hidden');
+    }
+}
+
+async function handleLogin() {
+    const email = els.authEmail.value;
+    const password = els.authPassword.value;
+    if (!supabase || !email || !password) return;
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) alert(error.message);
+    else checkUser();
+}
+
+async function handleSignup() {
+    const email = els.authEmail.value;
+    const password = els.authPassword.value;
+    if (!supabase || !email || !password) return;
+
+    const { error } = await supabase.auth.signUp({ email, password });
+    if (error) alert(error.message);
+    else {
+        alert('Check your email for the confirmation link!');
+    }
+}
+
+async function handleLogout() {
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    currentUser = null;
+    updateAuthUI();
+}
+
+async function syncData() {
+    if (!supabase || !currentUser) return;
+    
+    // Upsert state to 'profiles' table
+    // Assumes table 'profiles' exists with columns: id (uuid, pk), data (jsonb), updated_at (timestamptz)
+    const { error } = await supabase
+        .from('profiles')
+        .upsert({ 
+            id: currentUser.id, 
+            data: state, 
+            updated_at: new Date().toISOString() 
+        });
+
+    if (error) console.error('Sync error:', error);
+}
+
+async function pullData() {
+    if (!supabase || !currentUser) return;
+    
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('data')
+        .eq('id', currentUser.id)
+        .single();
+
+    if (data && data.data) {
+        console.log('Pulled cloud data:', data.data);
+        state = { ...state, ...data.data };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); // Save locally without triggering sync loop? 
+        updateUI();
+    }
+}
+
+// --- INIT ---
+
 loadState();
 updateUI();
-setInterval(updateUI, 1000); // Update timer every second
+setInterval(updateUI, 1000);
+initSupabase();
 
 els.smokeBtn.addEventListener('click', smoke);
 els.resetBtn.addEventListener('click', reset);
 els.restDayToggle.addEventListener('change', toggleRestDay);
 els.buyPackBtn.addEventListener('click', buyPack);
 els.packPriceInput.addEventListener('input', updatePrice);
+
+// Sync Listeners
+els.saveConfigBtn.addEventListener('click', saveSupabaseConfig);
+els.loginBtn.addEventListener('click', handleLogin);
+els.signupBtn.addEventListener('click', handleSignup);
+els.logoutBtn.addEventListener('click', handleLogout);
+els.forceSyncBtn.addEventListener('click', pullData);
