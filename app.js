@@ -35,6 +35,7 @@ const els = {
     sosBtn: document.getElementById('sos-btn'),
     sosModal: document.getElementById('sos-modal'),
     closeSosBtn: document.getElementById('close-sos-btn'),
+    closeSosX: document.getElementById('close-sos-x'),
     breathText: document.getElementById('breath-text'),
     distractionText: document.getElementById('distraction-text'),
     newDistractionBtn: document.getElementById('new-distraction-btn'),
@@ -991,7 +992,22 @@ try {
     // SOS Listeners
     if (els.sosBtn) els.sosBtn.addEventListener('click', openSos);
     if (els.closeSosBtn) els.closeSosBtn.addEventListener('click', closeSos);
+    if (els.closeSosX) els.closeSosX.addEventListener('click', closeSos);
     if (els.newDistractionBtn) els.newDistractionBtn.addEventListener('click', showNewDistraction);
+    
+    // Close SOS on backdrop click
+    if (els.sosModal) {
+        els.sosModal.addEventListener('click', (e) => {
+            if (e.target === els.sosModal) closeSos();
+        });
+    }
+
+    // Close on Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && !els.sosModal.classList.contains('hidden')) {
+            closeSos();
+        }
+    });
 
 } catch (err) {
     console.error('Critical initialization error:', err);
